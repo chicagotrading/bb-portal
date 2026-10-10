@@ -16,6 +16,7 @@ import type {
   BazelInvocationNodeFragment,
   FindBuildTimesQueryVariables,
 } from "@/graphql/__generated__/graphql";
+import dayjs from "@/lib/dayjs";
 import {
   readableDurationFromMilliseconds,
   spelledOutDurationFromMilliseconds,
@@ -70,24 +71,43 @@ export const TrendsPage: React.FC = () => {
 
   interface graphPoint {
     invocationId: string;
-    from: string;
-    to: string;
+    from: number;
+    to: number;
     duration: number;
   }
 
   const dataPoints: graphPoint[] = [];
 
   dataSource.forEach((x) => {
+    const from = new Date(x.startedAt).getTime();
+    const to = new Date(x.endedAt).getTime();
     var point: graphPoint = {
       invocationId: x.invocationID,
-      from: x.startedAt,
-      to: x.endedAt,
-      duration: new Date(x.endedAt).getTime() - new Date(x.startedAt).getTime(),
+      from,
+      to,
+      duration: to - from,
     };
     if (point.duration > 0) {
       dataPoints.push(point);
     }
   });
+  dataPoints.sort((a, b) => a.from - b.from);
+
+  const firstFrom = dataPoints.length > 0 ? dataPoints[0].from : 0;
+  const timeSpan =
+    dataPoints.length > 0
+      ? dataPoints[dataPoints.length - 1].from - firstFrom
+      : 0;
+  const timeTicks = Array.from(
+    { length: 8 },
+    (_, i) => firstFrom + (timeSpan * i) / 7,
+  );
+  const timeTickFormat =
+    timeSpan <= 86_400_000
+      ? "HH:mm"
+      : timeSpan <= 7 * 86_400_000
+        ? "MMM D HH:mm"
+        : "MMM D";
 
   var avg: number =
     dataPoints.reduce((sum, item) => sum + item.duration, 0) /
@@ -200,7 +220,7 @@ export const TrendsPage: React.FC = () => {
             width={1500}
             height={250}
             data={dataPoints}
-            margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+            margin={{ top: 10, right: 60, left: 10, bottom: 0 }}
           >
             <defs>
               <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
@@ -210,9 +230,14 @@ export const TrendsPage: React.FC = () => {
             </defs>
             <XAxis
               dataKey="from"
-              tickFormatter={(v: string) => new Date(v).toLocaleDateString()}
+              type="number"
+              scale="time"
+              domain={["dataMin", "dataMax"]}
+              ticks={timeTicks}
+              tickFormatter={(v: number) => dayjs(v).format(timeTickFormat)}
             />
             <YAxis
+              width={70}
               tickFormatter={(v: number) =>
                 readableDurationFromMilliseconds(v, { smallestUnit: "s" })
               }
@@ -225,6 +250,9 @@ export const TrendsPage: React.FC = () => {
                 borderColor: token.colorBorderSecondary,
               }}
               labelStyle={{ color: token.colorText }}
+              labelFormatter={(label) =>
+                dayjs(Number(label)).format("YYYY-MM-DD HH:mm:ss")
+              }
               formatter={(value) => [
                 spelledOutDurationFromMilliseconds(Number(value)),
                 "Duration",
