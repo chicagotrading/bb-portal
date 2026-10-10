@@ -1,6 +1,6 @@
 import { ClockCircleFilled, LineChartOutlined } from "@ant-design/icons";
 import { useQuery } from "@apollo/client/react";
-import { Row, Select, Space, Statistic } from "antd";
+import { Row, Select, Space, Statistic, theme } from "antd";
 import type React from "react";
 import { useState } from "react";
 import {
@@ -16,7 +16,10 @@ import type {
   BazelInvocationNodeFragment,
   FindBuildTimesQueryVariables,
 } from "@/graphql/__generated__/graphql";
-import { readableDurationFromMilliseconds } from "@/utils/time";
+import {
+  readableDurationFromMilliseconds,
+  spelledOutDurationFromMilliseconds,
+} from "@/utils/time";
 import FIND_BUILD_DURATIONS from "./index.graphql";
 
 const BAZEL_COMMANDS = [
@@ -31,6 +34,7 @@ const BAZEL_COMMANDS = [
 ];
 
 export const TrendsPage: React.FC = () => {
+  const { token } = theme.useToken();
   const [commands, setCommands] = useState<string[]>([]);
   const variables: FindBuildTimesQueryVariables = {
     first: 1000,
@@ -214,7 +218,18 @@ export const TrendsPage: React.FC = () => {
               }
             />
             <CartesianGrid vertical={false} strokeDasharray="3 3" />
-            <Tooltip />
+            <Tooltip
+              separator=": "
+              contentStyle={{
+                background: token.colorBgElevated,
+                borderColor: token.colorBorderSecondary,
+              }}
+              labelStyle={{ color: token.colorText }}
+              formatter={(value) => [
+                spelledOutDurationFromMilliseconds(Number(value)),
+                "Duration",
+              ]}
+            />
             <Area
               type="monotone"
               dataKey="duration"
