@@ -3,10 +3,11 @@ import { useQuery } from "@apollo/client/react";
 import { Link } from "@tanstack/react-router";
 import { Button, Row, Select, Space, Statistic, theme } from "antd";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
+  Brush,
   CartesianGrid,
   ReferenceDot,
   Tooltip,
@@ -53,6 +54,10 @@ export const TrendsPage: React.FC = () => {
     window.addEventListener("keydown", unpin);
     return () => window.removeEventListener("keydown", unpin);
   }, []);
+  const [brushRange, setBrushRange] = useState<{
+    startIndex: number;
+    endIndex: number;
+  } | null>(null);
   const variables: FindBuildTimesQueryVariables = {
     first: 1000,
     where: {
@@ -72,47 +77,34 @@ export const TrendsPage: React.FC = () => {
   );
 
   const activeData = loading ? previousData : data;
-  let dataSource: BazelInvocationNodeFragment[] = [];
 
-  if (error) {
-    dataSource = [];
-  } else {
-    const buildTimes =
-      activeData?.findBazelInvocations.edges?.flatMap((edge) => edge?.node) ??
-      [];
-    dataSource = buildTimes.filter(
-      (x): x is BazelInvocationNodeFragment => !!x,
-    );
-  }
+  // Stable across renders, so dragging the brush doesn't hand recharts new data and reset the drag.
+  const dataPoints = useMemo(() => {
+    const nodes = error
+      ? []
+      : (activeData?.findBazelInvocations.edges ?? [])
+          .map((edge) => edge?.node)
+          .filter((x): x is BazelInvocationNodeFragment => !!x);
+    return nodes
+      .map((x) => {
+        const from = new Date(x.startedAt).getTime();
+        const to = new Date(x.endedAt).getTime();
+        return { invocationId: x.invocationID, from, to, duration: to - from };
+      })
+      .filter((point) => point.duration > 0)
+      .sort((a, b) => a.from - b.from);
+  }, [activeData, error]);
 
-  interface graphPoint {
-    invocationId: string;
-    from: number;
-    to: number;
-    duration: number;
-  }
+  const range =
+    brushRange && brushRange.endIndex < dataPoints.length ? brushRange : null;
+  const visiblePoints = range
+    ? dataPoints.slice(range.startIndex, range.endIndex + 1)
+    : dataPoints;
 
-  const dataPoints: graphPoint[] = [];
-
-  dataSource.forEach((x) => {
-    const from = new Date(x.startedAt).getTime();
-    const to = new Date(x.endedAt).getTime();
-    var point: graphPoint = {
-      invocationId: x.invocationID,
-      from,
-      to,
-      duration: to - from,
-    };
-    if (point.duration > 0) {
-      dataPoints.push(point);
-    }
-  });
-  dataPoints.sort((a, b) => a.from - b.from);
-
-  const firstFrom = dataPoints.length > 0 ? dataPoints[0].from : 0;
+  const firstFrom = visiblePoints.length > 0 ? visiblePoints[0].from : 0;
   const timeSpan =
-    dataPoints.length > 0
-      ? dataPoints[dataPoints.length - 1].from - firstFrom
+    visiblePoints.length > 0
+      ? visiblePoints[visiblePoints.length - 1].from - firstFrom
       : 0;
   const timeTicks = Array.from(
     { length: 8 },
@@ -126,10 +118,10 @@ export const TrendsPage: React.FC = () => {
         : "MMM D";
 
   var avg: number =
-    dataPoints.reduce((sum, item) => sum + item.duration, 0) /
-    dataPoints.length;
-  var medianVals = dataPoints.map((x) => x.duration).sort((a, b) => a - b);
-  var medianMid = Math.floor(dataPoints.length / 2);
+    visiblePoints.reduce((sum, item) => sum + item.duration, 0) /
+    visiblePoints.length;
+  var medianVals = visiblePoints.map((x) => x.duration).sort((a, b) => a - b);
+  var medianMid = Math.floor(visiblePoints.length / 2);
   var median: number;
 
   if (medianVals.length % 2 === 0) {
@@ -138,8 +130,8 @@ export const TrendsPage: React.FC = () => {
     median = medianVals[medianMid];
   }
 
-  var max: number = Math.max(...dataPoints.map((x) => x.duration));
-  var min: number = Math.min(...dataPoints.map((x) => x.duration));
+  var max: number = Math.max(...visiblePoints.map((x) => x.duration));
+  var min: number = Math.min(...visiblePoints.map((x) => x.duration));
 
   return (
     <PortalCard
@@ -163,6 +155,7 @@ export const TrendsPage: React.FC = () => {
             onChange={(value) => {
               setCommands(value);
               setPinned(null);
+              setBrushRange(null);
             }}
             options={BAZEL_COMMANDS.map((command) => ({
               label: command,
@@ -174,8 +167,12 @@ export const TrendsPage: React.FC = () => {
         <Row>
           <Space size="large">
             <Statistic
-              title="Total"
-              value={data?.findBazelInvocations.totalCount}
+              title={range ? "In window" : "Total"}
+              value={
+                range
+                  ? visiblePoints.length
+                  : data?.findBazelInvocations.totalCount
+              }
               styles={{
                 content: {
                   color: "#82ca9d",
@@ -185,7 +182,7 @@ export const TrendsPage: React.FC = () => {
             <Statistic
               title="Average"
               value={
-                dataPoints.length === 0
+                visiblePoints.length === 0
                   ? "-"
                   : readableDurationFromMilliseconds(avg, {
                       smallestUnit: "ms",
@@ -200,7 +197,7 @@ export const TrendsPage: React.FC = () => {
             <Statistic
               title="Median"
               value={
-                dataPoints.length === 0
+                visiblePoints.length === 0
                   ? "-"
                   : readableDurationFromMilliseconds(median, {
                       smallestUnit: "ms",
@@ -215,7 +212,7 @@ export const TrendsPage: React.FC = () => {
             <Statistic
               title="Max"
               value={
-                dataPoints.length === 0
+                visiblePoints.length === 0
                   ? "-"
                   : readableDurationFromMilliseconds(max, {
                       smallestUnit: "ms",
@@ -225,7 +222,7 @@ export const TrendsPage: React.FC = () => {
             <Statistic
               title="Min"
               value={
-                dataPoints.length === 0
+                visiblePoints.length === 0
                   ? "-"
                   : readableDurationFromMilliseconds(min, {
                       smallestUnit: "ms",
@@ -238,9 +235,9 @@ export const TrendsPage: React.FC = () => {
           <div style={{ position: "relative" }}>
             <AreaChart
               width={1500}
-              height={250}
+              height={300}
               data={dataPoints}
-              margin={{ top: 10, right: 60, left: 10, bottom: 0 }}
+              margin={{ top: 10, right: 90, left: 10, bottom: 0 }}
               style={{ cursor: "pointer" }}
               onClick={(state) => {
                 const point = dataPoints.find(
@@ -308,6 +305,34 @@ export const TrendsPage: React.FC = () => {
                   strokeWidth: 2,
                 }}
               />
+              <Brush
+                dataKey="from"
+                height={40}
+                stroke="#8884d8"
+                fill={token.colorBgContainer}
+                startIndex={range?.startIndex}
+                endIndex={range?.endIndex}
+                tickFormatter={(v: number) => dayjs(v).format("MMM D HH:mm")}
+                onChange={({ startIndex, endIndex }) => {
+                  setPinned(null);
+                  setBrushRange(
+                    startIndex === 0 && endIndex === dataPoints.length - 1
+                      ? null
+                      : { startIndex, endIndex },
+                  );
+                }}
+              >
+                <AreaChart data={dataPoints}>
+                  <Area
+                    type="monotone"
+                    dataKey="duration"
+                    stroke="#8884d8"
+                    fill="#8884d8"
+                    fillOpacity={0.3}
+                    isAnimationActive={false}
+                  />
+                </AreaChart>
+              </Brush>
               {pinned && (
                 <ReferenceDot
                   x={pinned.from}
