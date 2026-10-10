@@ -9,11 +9,14 @@ import (
 	"context"
 	"time"
 
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"github.com/buildbarn/bb-portal/ent/gen/ent"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/authenticateduser"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/bazelinvocation"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/build"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/invocationtarget"
+	"github.com/buildbarn/bb-portal/ent/gen/ent/predicate"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/target"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/testsummary"
 	"github.com/buildbarn/bb-portal/internal/graphql/helpers"
@@ -93,4 +96,19 @@ func (r *queryResolver) GetTestSummary(ctx context.Context, invocationID uuid.UU
 		return nil, util.StatusWrap(err, "Failed to query fields")
 	}
 	return query.Only(ctx)
+}
+
+// CommandIn is the resolver for the commandIn field.
+func (r *bazelInvocationWhereInputResolver) CommandIn(ctx context.Context, obj *ent.BazelInvocationWhereInput, data []string) error {
+	if len(data) == 0 {
+		return nil
+	}
+	commands := make([]any, 0, len(data))
+	for _, command := range data {
+		commands = append(commands, command)
+	}
+	obj.AddPredicates(predicate.BazelInvocation(func(s *sql.Selector) {
+		s.Where(sqljson.ValueIn(s.C(bazelinvocation.FieldCanonicalCommandLine), commands, sqljson.Path("command")))
+	}))
+	return nil
 }

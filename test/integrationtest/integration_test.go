@@ -747,6 +747,14 @@ var (
 							"first": 10,
 						},
 					},
+					"find test times": {
+						variables: testkit.Variables{
+							"first": 10,
+							"where": map[string]interface{}{
+								"commandIn": []string{"test"},
+							},
+						},
+					},
 				},
 				"CheckIfInvocationExists": {
 					"exists": {
