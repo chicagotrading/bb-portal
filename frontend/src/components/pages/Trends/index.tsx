@@ -1,12 +1,14 @@
 import { ClockCircleFilled, LineChartOutlined } from "@ant-design/icons";
 import { useQuery } from "@apollo/client/react";
-import { Row, Select, Space, Statistic, theme } from "antd";
+import { Link } from "@tanstack/react-router";
+import { Button, Row, Select, Space, Statistic, theme } from "antd";
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Area,
   AreaChart,
   CartesianGrid,
+  ReferenceDot,
   Tooltip,
   XAxis,
   YAxis,
@@ -37,6 +39,20 @@ const BAZEL_COMMANDS = [
 export const TrendsPage: React.FC = () => {
   const { token } = theme.useToken();
   const [commands, setCommands] = useState<string[]>([]);
+  // Invocation whose tooltip was pinned by a click; it stays put and links to the invocation.
+  const [pinned, setPinned] = useState<{
+    invocationId: string;
+    from: number;
+    duration: number;
+    x: number;
+  } | null>(null);
+  useEffect(() => {
+    const unpin = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setPinned(null);
+    };
+    window.addEventListener("keydown", unpin);
+    return () => window.removeEventListener("keydown", unpin);
+  }, []);
   const variables: FindBuildTimesQueryVariables = {
     first: 1000,
     where: {
@@ -144,7 +160,10 @@ export const TrendsPage: React.FC = () => {
             placeholder="All commands"
             style={{ minWidth: 220 }}
             value={commands}
-            onChange={setCommands}
+            onChange={(value) => {
+              setCommands(value);
+              setPinned(null);
+            }}
             options={BAZEL_COMMANDS.map((command) => ({
               label: command,
               value: command,
@@ -216,56 +235,130 @@ export const TrendsPage: React.FC = () => {
           </Space>
         </Row>
         <Row>
-          <AreaChart
-            width={1500}
-            height={250}
-            data={dataPoints}
-            margin={{ top: 10, right: 60, left: 10, bottom: 0 }}
-          >
-            <defs>
-              <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
-                <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <XAxis
-              dataKey="from"
-              type="number"
-              scale="time"
-              domain={["dataMin", "dataMax"]}
-              ticks={timeTicks}
-              tickFormatter={(v: number) => dayjs(v).format(timeTickFormat)}
-            />
-            <YAxis
-              width={70}
-              tickFormatter={(v: number) =>
-                readableDurationFromMilliseconds(v, { smallestUnit: "s" })
-              }
-            />
-            <CartesianGrid vertical={false} strokeDasharray="3 3" />
-            <Tooltip
-              separator=": "
-              contentStyle={{
-                background: token.colorBgElevated,
-                borderColor: token.colorBorderSecondary,
+          <div style={{ position: "relative" }}>
+            <AreaChart
+              width={1500}
+              height={250}
+              data={dataPoints}
+              margin={{ top: 10, right: 60, left: 10, bottom: 0 }}
+              style={{ cursor: "pointer" }}
+              onClick={(state) => {
+                const point = dataPoints.find(
+                  (p) => p.from === Number(state.activeLabel),
+                );
+                if (point) {
+                  setPinned({
+                    ...point,
+                    x: Number(state.activeCoordinate?.x ?? 0),
+                  });
+                }
               }}
-              labelStyle={{ color: token.colorText }}
-              labelFormatter={(label) =>
-                dayjs(Number(label)).format("YYYY-MM-DD HH:mm:ss")
-              }
-              formatter={(value) => [
-                spelledOutDurationFromMilliseconds(Number(value)),
-                "Duration",
-              ]}
-            />
-            <Area
-              type="monotone"
-              dataKey="duration"
-              stroke="#8884d8"
-              fillOpacity={1}
-              fill="url(#colorUv)"
-            />
-          </AreaChart>
+            >
+              <defs>
+                <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <XAxis
+                dataKey="from"
+                type="number"
+                scale="time"
+                domain={["dataMin", "dataMax"]}
+                ticks={timeTicks}
+                tickFormatter={(v: number) => dayjs(v).format(timeTickFormat)}
+              />
+              <YAxis
+                width={70}
+                tickFormatter={(v: number) =>
+                  readableDurationFromMilliseconds(v, { smallestUnit: "s" })
+                }
+              />
+              <CartesianGrid vertical={false} strokeDasharray="3 3" />
+              <Tooltip
+                active={pinned ? false : undefined}
+                position={{ y: 0 }}
+                separator=": "
+                contentStyle={{
+                  background: token.colorBgElevated,
+                  borderColor: token.colorBorderSecondary,
+                }}
+                labelStyle={{ color: token.colorText }}
+                labelFormatter={(label) => (
+                  <>
+                    {dayjs(Number(label)).format("YYYY-MM-DD HH:mm:ss")}
+                    <br />
+                    <small>Click to pin, then open the invocation</small>
+                  </>
+                )}
+                formatter={(value) => [
+                  spelledOutDurationFromMilliseconds(Number(value)),
+                  "Duration",
+                ]}
+              />
+              <Area
+                type="monotone"
+                dataKey="duration"
+                stroke="#8884d8"
+                fillOpacity={1}
+                fill="url(#colorUv)"
+                activeDot={{
+                  r: 6,
+                  stroke: token.colorBgContainer,
+                  strokeWidth: 2,
+                }}
+              />
+              {pinned && (
+                <ReferenceDot
+                  x={pinned.from}
+                  y={pinned.duration}
+                  r={7}
+                  fill="#8884d8"
+                  stroke={token.colorText}
+                  strokeWidth={2}
+                />
+              )}
+            </AreaChart>
+            {pinned && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: Math.min(pinned.x + 12, 1500 - 300),
+                  padding: "8px 12px",
+                  background: token.colorBgElevated,
+                  border: `1px solid ${token.colorBorderSecondary}`,
+                  color: token.colorText,
+                }}
+              >
+                <Button
+                  type="text"
+                  size="small"
+                  aria-label="Unpin"
+                  onClick={() => setPinned(null)}
+                  style={{ position: "absolute", top: 2, right: 2 }}
+                >
+                  ×
+                </Button>
+                <div style={{ paddingRight: 24 }}>
+                  {dayjs(pinned.from).format("YYYY-MM-DD HH:mm:ss")}
+                </div>
+                <div style={{ color: "#8884d8" }}>
+                  Duration:{" "}
+                  {spelledOutDurationFromMilliseconds(pinned.duration)}
+                </div>
+                <div>
+                  Open the{" "}
+                  <Link
+                    to="/bazel-invocations/$invocationID"
+                    params={{ invocationID: pinned.invocationId }}
+                  >
+                    invocation
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
         </Row>
       </PortalCard>
     </PortalCard>
