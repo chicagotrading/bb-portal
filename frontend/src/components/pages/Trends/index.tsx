@@ -1,15 +1,23 @@
-import { ClockCircleFilled, LineChartOutlined } from "@ant-design/icons";
+import {
+  BarChartOutlined,
+  ClockCircleFilled,
+  LineChartOutlined,
+} from "@ant-design/icons";
 import { useQuery } from "@apollo/client/react";
 import { Link } from "@tanstack/react-router";
-import { Button, Row, Select, Space, Statistic, theme } from "antd";
+import { Button, Row, Select, Space, Statistic, Typography, theme } from "antd";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
+  Bar,
   Brush,
   CartesianGrid,
+  ComposedChart,
+  Line,
   ReferenceDot,
+  ReferenceLine,
   Tooltip,
   XAxis,
   YAxis,
@@ -36,6 +44,29 @@ const BAZEL_COMMANDS = [
   "aquery",
   "fetch",
 ];
+
+// Width of a distribution bin, in decades of milliseconds (about 26% per bin).
+const LOG_BIN_WIDTH = 0.1;
+const LOG_TICKS = [
+  10, 100, 1_000, 10_000, 60_000, 600_000, 3_600_000, 36_000_000,
+].map(Math.log10);
+
+const shortDuration = (milliseconds: number): string => {
+  if (milliseconds < 1_000) return `${Math.round(milliseconds)} ms`;
+  if (milliseconds < 60_000) return `${Math.round(milliseconds / 1_000)} s`;
+  if (milliseconds < 3_600_000)
+    return `${Math.round(milliseconds / 60_000)} min`;
+  return `${Math.round(milliseconds / 3_600_000)} h`;
+};
+
+interface DistributionBin {
+  x: number;
+  lower: number;
+  upper: number;
+  count: number;
+  density: number;
+  cumulative: number;
+}
 
 export const TrendsPage: React.FC = () => {
   const { token } = theme.useToken();
@@ -132,6 +163,70 @@ export const TrendsPage: React.FC = () => {
 
   var max: number = Math.max(...visiblePoints.map((x) => x.duration));
   var min: number = Math.min(...visiblePoints.map((x) => x.duration));
+
+  // Linear interpolation between ranks, so p50 equals the median above.
+  const percentile = (q: number) => {
+    const rank = q * (medianVals.length - 1);
+    const lower = medianVals[Math.floor(rank)];
+    const upper = medianVals[Math.ceil(rank)];
+    return lower + (upper - lower) * (rank - Math.floor(rank));
+  };
+  const percentileMarkers = [
+    { name: "p50", value: percentile(0.5) },
+    { name: "p90", value: percentile(0.9) },
+    { name: "p99", value: percentile(0.99) },
+  ];
+
+  // Durations span orders of magnitude, so bin and smooth them in log10 space.
+  const logs = medianVals.map((duration) => Math.log10(duration));
+  const logMin =
+    logs.length > 0 ? Math.floor(logs[0] / LOG_BIN_WIDTH) * LOG_BIN_WIDTH : 0;
+  const logMax =
+    logs.length > 0
+      ? Math.max(
+          logMin + LOG_BIN_WIDTH,
+          Math.ceil(logs[logs.length - 1] / LOG_BIN_WIDTH) * LOG_BIN_WIDTH,
+        )
+      : 1;
+  const logMean = logs.reduce((sum, x) => sum + x, 0) / logs.length;
+  const logDeviation = Math.sqrt(
+    logs.reduce((sum, x) => sum + (x - logMean) ** 2, 0) / logs.length,
+  );
+  // Durations have several peaks, which Silverman's rule smooths away; use half its robust form.
+  const logQuartile = (q: number) =>
+    logs[Math.min(logs.length - 1, Math.floor(q * logs.length))];
+  const logSpread = Math.min(
+    logDeviation,
+    (logQuartile(0.75) - logQuartile(0.25)) / 1.34,
+  );
+  const bandwidth = Math.max(
+    LOG_BIN_WIDTH,
+    (0.9 * logSpread * logs.length ** -0.2) / 2,
+  );
+  const binCount = Math.round((logMax - logMin) / LOG_BIN_WIDTH);
+  const distribution: DistributionBin[] =
+    logs.length === 0
+      ? []
+      : Array.from({ length: binCount }, (_, i) => {
+          const lower = logMin + i * LOG_BIN_WIDTH;
+          const upper = lower + LOG_BIN_WIDTH;
+          const x = lower + LOG_BIN_WIDTH / 2;
+          const last = i === binCount - 1;
+          const count = logs.filter(
+            (l) => l >= lower && (l < upper || last),
+          ).length;
+          const density =
+            (logs.reduce(
+              (sum, l) => sum + Math.exp(-0.5 * ((x - l) / bandwidth) ** 2),
+              0,
+            ) /
+              (bandwidth * Math.sqrt(2 * Math.PI))) *
+            LOG_BIN_WIDTH;
+          const cumulative =
+            (100 * logs.filter((l) => l <= x).length) / logs.length;
+          return { x, lower, upper, count, density, cumulative };
+        });
+  const distributionTicks = LOG_TICKS.filter((t) => t >= logMin && t <= logMax);
 
   return (
     <PortalCard
@@ -384,6 +479,212 @@ export const TrendsPage: React.FC = () => {
               </div>
             )}
           </div>
+        </Row>
+      </PortalCard>
+      <PortalCard
+        type="inner"
+        icon={<BarChartOutlined />}
+        titleBits={[
+          <span key="duration-distribution">Duration Distribution</span>,
+        ]}
+      >
+        <Row>
+          <Space size="large">
+            {percentileMarkers.map((marker) => (
+              <Statistic
+                key={marker.name}
+                title={marker.name}
+                value={
+                  visiblePoints.length === 0
+                    ? "-"
+                    : readableDurationFromMilliseconds(marker.value, {
+                        smallestUnit: "ms",
+                      })
+                }
+              />
+            ))}
+          </Space>
+        </Row>
+        <Typography.Text type="secondary">
+          Invocations per duration, with a smoothed density curve
+        </Typography.Text>
+        <Row>
+          <ComposedChart
+            width={1500}
+            height={220}
+            data={distribution}
+            margin={{ top: 20, right: 90, left: 10, bottom: 0 }}
+          >
+            <XAxis
+              dataKey="x"
+              type="number"
+              domain={[logMin, logMax]}
+              ticks={distributionTicks}
+              tickFormatter={(v: number) => shortDuration(10 ** v)}
+            />
+            <YAxis yAxisId="count" width={70} allowDecimals={false} />
+            <YAxis
+              yAxisId="spacer"
+              orientation="right"
+              width={60}
+              tick={false}
+              axisLine={false}
+            />
+            <CartesianGrid vertical={false} strokeDasharray="3 3" />
+            <Tooltip
+              separator=": "
+              contentStyle={{
+                background: token.colorBgElevated,
+                borderColor: token.colorBorderSecondary,
+              }}
+              labelStyle={{ color: token.colorText }}
+              labelFormatter={(_, payload) => {
+                const bin = payload?.[0]?.payload as
+                  | DistributionBin
+                  | undefined;
+                return bin
+                  ? `${readableDurationFromMilliseconds(10 ** bin.lower)} – ${readableDurationFromMilliseconds(10 ** bin.upper)}`
+                  : "";
+              }}
+              formatter={(value, name) => {
+                const v = Number(value);
+                if (name === "Invocations") {
+                  return [
+                    `${v} (${((v / logs.length) * 100).toFixed(1)}%)`,
+                    name,
+                  ];
+                }
+                if (name === "Finished within") {
+                  return [`${v.toFixed(1)}%`, name];
+                }
+                return [v.toFixed(1), name];
+              }}
+            />
+            <Bar
+              yAxisId="count"
+              dataKey="count"
+              name="Invocations"
+              fill="#82ca9d"
+              fillOpacity={0.35}
+              isAnimationActive={false}
+            />
+            <Line
+              yAxisId="count"
+              dataKey="density"
+              name="Smoothed"
+              type="monotone"
+              stroke="#2e9e5f"
+              strokeWidth={2}
+              dot={false}
+              isAnimationActive={false}
+            />
+            {logs.length > 0 &&
+              percentileMarkers.map((marker) => (
+                <ReferenceLine
+                  key={marker.name}
+                  yAxisId="count"
+                  x={Math.log10(marker.value)}
+                  stroke="#8884d8"
+                  strokeDasharray="4 2"
+                  label={{
+                    value: marker.name,
+                    position: "top",
+                    fill: token.colorText,
+                  }}
+                />
+              ))}
+          </ComposedChart>
+        </Row>
+        <Typography.Text type="secondary">
+          Invocations per duration, with the share finished within each duration
+        </Typography.Text>
+        <Row>
+          <ComposedChart
+            width={1500}
+            height={220}
+            data={distribution}
+            margin={{ top: 20, right: 90, left: 10, bottom: 0 }}
+          >
+            <XAxis
+              dataKey="x"
+              type="number"
+              domain={[logMin, logMax]}
+              ticks={distributionTicks}
+              tickFormatter={(v: number) => shortDuration(10 ** v)}
+            />
+            <YAxis yAxisId="count" width={70} allowDecimals={false} />
+            <YAxis
+              yAxisId="share"
+              orientation="right"
+              width={60}
+              domain={[0, 100]}
+              ticks={[0, 25, 50, 75, 90, 100]}
+              tickFormatter={(v: number) => `${v}%`}
+            />
+            <CartesianGrid vertical={false} strokeDasharray="3 3" />
+            <Tooltip
+              separator=": "
+              contentStyle={{
+                background: token.colorBgElevated,
+                borderColor: token.colorBorderSecondary,
+              }}
+              labelStyle={{ color: token.colorText }}
+              labelFormatter={(_, payload) => {
+                const bin = payload?.[0]?.payload as
+                  | DistributionBin
+                  | undefined;
+                return bin
+                  ? `${readableDurationFromMilliseconds(10 ** bin.lower)} – ${readableDurationFromMilliseconds(10 ** bin.upper)}`
+                  : "";
+              }}
+              formatter={(value, name) => {
+                const v = Number(value);
+                if (name === "Invocations") {
+                  return [
+                    `${v} (${((v / logs.length) * 100).toFixed(1)}%)`,
+                    name,
+                  ];
+                }
+                if (name === "Finished within") {
+                  return [`${v.toFixed(1)}%`, name];
+                }
+                return [v.toFixed(1), name];
+              }}
+            />
+            <Bar
+              yAxisId="count"
+              dataKey="count"
+              name="Invocations"
+              fill="#82ca9d"
+              fillOpacity={0.35}
+              isAnimationActive={false}
+            />
+            <Line
+              yAxisId="share"
+              dataKey="cumulative"
+              name="Finished within"
+              type="monotone"
+              stroke="#8884d8"
+              strokeWidth={2}
+              dot={false}
+              isAnimationActive={false}
+            />
+            {logs.length > 0 &&
+              percentileMarkers.map((marker) => (
+                <ReferenceLine
+                  key={marker.name}
+                  yAxisId="count"
+                  x={Math.log10(marker.value)}
+                  stroke="#8884d8"
+                  strokeDasharray="4 2"
+                  label={{
+                    value: marker.name,
+                    position: "top",
+                    fill: token.colorText,
+                  }}
+                />
+              ))}
+          </ComposedChart>
         </Row>
       </PortalCard>
     </PortalCard>
