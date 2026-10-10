@@ -7,7 +7,7 @@ import { useQuery } from "@apollo/client/react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { Row, Select, Space, Statistic, Typography, theme } from "antd";
 import type React from "react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -70,8 +70,20 @@ interface DistributionBin {
   cumulative: number;
 }
 
+const BAZEL_COMMANDS = [
+  "build",
+  "test",
+  "run",
+  "coverage",
+  "query",
+  "cquery",
+  "aquery",
+  "fetch",
+];
+
 export const TrendsPage: React.FC = () => {
   const { token } = theme.useToken();
+  const [commands, setCommands] = useState<string[]>([]);
   const search = useSearch({ from: "/trends" });
   const limit = search.limit ?? TRENDS_DEFAULT_LIMIT;
   const timeWindow = search.window ?? "all";
@@ -86,6 +98,7 @@ export const TrendsPage: React.FC = () => {
         ...(hours && {
           startedAtGT: dayjs().subtract(hours, "hour").toISOString(),
         }),
+        ...(commands.length > 0 && { commandIn: commands }),
       },
       // Newest first; without an order the API returns the oldest invocations still kept.
       orderBy: {
@@ -93,7 +106,7 @@ export const TrendsPage: React.FC = () => {
         field: BazelInvocationOrderField.StartedAt,
       },
     };
-  }, [limit, timeWindow]);
+  }, [limit, timeWindow, commands]);
 
   const { loading, data, previousData, error } = useQuery(
     FIND_BUILD_DURATIONS,
@@ -274,6 +287,19 @@ export const TrendsPage: React.FC = () => {
             options={TRENDS_LIMITS.map((value) => ({
               value,
               label: `Latest ${value} invocations`,
+            }))}
+          />,
+          <Select
+            key="command-filter"
+            mode="multiple"
+            allowClear
+            placeholder="All commands"
+            style={{ minWidth: 220 }}
+            value={commands}
+            onChange={setCommands}
+            options={BAZEL_COMMANDS.map((command) => ({
+              label: command,
+              value: command,
             }))}
           />,
         ]}

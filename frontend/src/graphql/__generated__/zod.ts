@@ -557,6 +557,7 @@ export function BazelInvocationWhereInputSchema(): z.ZodObject<Properties<BazelI
     bazelVersionNotNil: z.boolean().nullish(),
     bepCompleted: z.boolean().nullish(),
     bepCompletedNEQ: z.boolean().nullish(),
+    commandIn: z.array(z.string().min(1)).nullish(),
     endedAt: z.iso.datetime({ offset: true }).nullish(),
     endedAtGT: z.iso.datetime({ offset: true }).nullish(),
     endedAtGTE: z.iso.datetime({ offset: true }).nullish(),
