@@ -798,6 +798,11 @@ export type BazelInvocationWhereInput = {
   /** bep_completed field predicates */
   bepCompleted?: InputMaybe<Scalars['Boolean']['input']>;
   bepCompletedNEQ?: InputMaybe<Scalars['Boolean']['input']>;
+  /**
+   * Bazel commands (build, test, query, ...) the invocation ran, as recorded in
+   * its canonical command line.
+   */
+  commandIn?: InputMaybe<Array<Scalars['String']['input']>>;
   /** ended_at field predicates */
   endedAt?: InputMaybe<Scalars['Time']['input']>;
   endedAtGT?: InputMaybe<Scalars['Time']['input']>;

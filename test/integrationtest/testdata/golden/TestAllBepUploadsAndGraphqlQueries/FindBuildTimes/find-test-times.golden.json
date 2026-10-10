@@ -1,0 +1,55 @@
+{
+  "findBazelInvocations": {
+    "edges": [
+      {
+        "node": {
+          "endedAt": "2024-05-03T00:24:29.605Z",
+          "invocationID": "fd03240f-697e-4b64-95bc-888e27445bf9",
+          "startedAt": "2024-05-03T00:24:28.621Z"
+        }
+      },
+      {
+        "node": {
+          "endedAt": "2024-05-03T00:24:16.367Z",
+          "invocationID": "08ae089d-4c85-405c-83fc-dbe9fc1dc942",
+          "startedAt": "2024-05-03T00:24:15.374Z"
+        }
+      },
+      {
+        "node": {
+          "endedAt": "2024-05-03T00:23:40.441Z",
+          "invocationID": "10a37e86-6e2b-4adb-83dd-c2906f42bdd6",
+          "startedAt": "2024-05-03T00:23:37.843Z"
+        }
+      },
+      {
+        "node": {
+          "endedAt": "2024-05-13T23:43:26.247Z",
+          "invocationID": "571d0839-fd63-4442-bb4d-61f7bfa4ddae",
+          "startedAt": "2024-05-13T23:43:23.045Z"
+        }
+      },
+      {
+        "node": {
+          "endedAt": "2026-02-04T09:03:27.366Z",
+          "invocationID": "64719226-555e-494d-9918-0fd25d468b1e",
+          "startedAt": "2026-02-04T09:03:25.376Z"
+        }
+      },
+      {
+        "node": {
+          "endedAt": "2026-07-13T07:54:01.866Z",
+          "invocationID": "eb510b31-a9cc-441f-8898-5104ef0025fd",
+          "startedAt": "2026-07-13T07:53:21.304Z"
+        }
+      }
+    ],
+    "pageInfo": {
+      "endCursor": "gaFp0wAAAAAAAAAK",
+      "hasNextPage": false,
+      "hasPreviousPage": false,
+      "startCursor": "gaFp0wAAAAAAAAAB"
+    },
+    "totalCount": 6
+  }
+}

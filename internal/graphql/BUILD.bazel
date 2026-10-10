@@ -22,6 +22,7 @@ go_library(
         "//ent/gen/ent/bazelinvocation",
         "//ent/gen/ent/build",
         "//ent/gen/ent/invocationtarget",
+        "//ent/gen/ent/predicate",
         "//ent/gen/ent/target",
         "//ent/gen/ent/testsummary",
         "//internal/database",
@@ -39,6 +40,8 @@ go_library(
         "@com_github_vektah_gqlparser_v2//:gqlparser",
         "@com_github_vektah_gqlparser_v2//ast",
         "@io_entgo_contrib//entgql",
+        "@io_entgo_ent//dialect/sql",
+        "@io_entgo_ent//dialect/sql/sqljson",
         "@io_opentelemetry_go_otel_trace//:trace",
     ],
 )

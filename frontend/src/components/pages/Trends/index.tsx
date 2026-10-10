@@ -1,6 +1,6 @@
 import { ClockCircleFilled, LineChartOutlined } from "@ant-design/icons";
 import { useQuery } from "@apollo/client/react";
-import { Row, Space, Statistic } from "antd";
+import { Row, Select, Space, Statistic } from "antd";
 import type React from "react";
 import { useState } from "react";
 import {
@@ -19,11 +19,27 @@ import type {
 import { readableDurationFromMilliseconds } from "@/utils/time";
 import FIND_BUILD_DURATIONS from "./index.graphql";
 
+const BAZEL_COMMANDS = [
+  "build",
+  "test",
+  "run",
+  "coverage",
+  "query",
+  "cquery",
+  "aquery",
+  "fetch",
+];
+
 export const TrendsPage: React.FC = () => {
-  const [variables, _setVariables] = useState<FindBuildTimesQueryVariables>({
+  const [commands, setCommands] = useState<string[]>([]);
+  const variables: FindBuildTimesQueryVariables = {
     first: 1000,
-    where: { startedAtNotNil: true, endedAtNotNil: true },
-  });
+    where: {
+      startedAtNotNil: true,
+      endedAtNotNil: true,
+      ...(commands.length > 0 && { commandIn: commands }),
+    },
+  };
 
   const { loading, data, previousData, error } = useQuery(
     FIND_BUILD_DURATIONS,
@@ -95,6 +111,21 @@ export const TrendsPage: React.FC = () => {
         icon={<ClockCircleFilled />}
         titleBits={[
           <span key="invocation-durations">Invocation Durations</span>,
+        ]}
+        extraBits={[
+          <Select
+            key="command-filter"
+            mode="multiple"
+            allowClear
+            placeholder="All commands"
+            style={{ minWidth: 220 }}
+            value={commands}
+            onChange={setCommands}
+            options={BAZEL_COMMANDS.map((command) => ({
+              label: command,
+              value: command,
+            }))}
+          />,
         ]}
       >
         <Row>
