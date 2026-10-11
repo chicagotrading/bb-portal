@@ -29,7 +29,10 @@ import {
   OrderDirection,
 } from "@/graphql/__generated__/graphql";
 import dayjs from "@/lib/dayjs";
-import { readableDurationFromMilliseconds } from "@/utils/time";
+import {
+  readableDurationFromMilliseconds,
+  spelledOutDurationFromMilliseconds,
+} from "@/utils/time";
 import FIND_BUILD_DURATIONS from "./index.graphql";
 
 const TRENDS_DEFAULT_LIMIT = 1000;
@@ -366,9 +369,14 @@ export const TrendsPage: React.FC = () => {
               />
               <CartesianGrid vertical={false} strokeDasharray="3 3" />
               <Tooltip
+                separator=": "
                 labelFormatter={(label) =>
                   dayjs(Number(label)).format("YYYY-MM-DD HH:mm:ss")
                 }
+                formatter={(value) => [
+                  spelledOutDurationFromMilliseconds(Number(value)),
+                  "Duration",
+                ]}
               />
               <Area
                 type="monotone"
