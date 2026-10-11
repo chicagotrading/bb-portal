@@ -38,26 +38,40 @@ export const TestSummaryPage: React.FC<Props> = ({
   testResults,
 }) => {
   const tableRows: TestSummaryDetailsTableRows[] = useMemo(() => {
-    return testResults.flatMap(
-      (tr) =>
-        tr.testActionOutput?.map((file, index) => ({
-          isFirstTestResultRow: index === 0,
-          numberOfTestResultRows: tr.testActionOutput?.length ?? 0,
-          id: tr.id,
-          run: tr.run,
-          shard: tr.shard,
-          attempt: tr.attempt,
-          status: tr.status ?? undefined,
-          exitCode: tr.exitCode ?? undefined,
-          strategy: tr.strategy ?? undefined,
-          cacheLocation: cacheLocationFromBooleans(
-            tr.cachedLocally,
-            tr.cachedRemotely,
-          ),
-          testAttemptDurationInMs: tr.testAttemptDurationInMs ?? undefined,
-          file: getFragmentData(FILE_DETAILS_FRAGMENT, file),
-        })) ?? [],
-    );
+    return testResults.flatMap((tr): TestSummaryDetailsTableRows[] => {
+      const result = {
+        id: tr.id,
+        run: tr.run,
+        shard: tr.shard,
+        attempt: tr.attempt,
+        status: tr.status ?? undefined,
+        exitCode: tr.exitCode ?? undefined,
+        strategy: tr.strategy ?? undefined,
+        cacheLocation: cacheLocationFromBooleans(
+          tr.cachedLocally,
+          tr.cachedRemotely,
+        ),
+        testAttemptDurationInMs: tr.testAttemptDurationInMs ?? undefined,
+      };
+      const files = tr.testActionOutput ?? [];
+      // Results from before outputs were recorded have none; still list them.
+      if (files.length === 0) {
+        return [
+          {
+            ...result,
+            isFirstTestResultRow: true,
+            numberOfTestResultRows: 1,
+            file: undefined,
+          },
+        ];
+      }
+      return files.map((file, index) => ({
+        ...result,
+        isFirstTestResultRow: index === 0,
+        numberOfTestResultRows: files.length,
+        file: getFragmentData(FILE_DETAILS_FRAGMENT, file),
+      }));
+    });
   }, [testResults]);
 
   const cacheLocation: CacheLocation = useMemo(

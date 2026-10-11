@@ -1,4 +1,4 @@
-import type { TableColumnsType } from "antd";
+import { type TableColumnsType, Typography } from "antd";
 import {
   type CacheLocation,
   CacheLocationTag,
@@ -21,7 +21,7 @@ export type TestSummaryDetailsTableRows = {
   strategy: string | undefined;
   testAttemptDurationInMs: number | undefined;
   cacheLocation: CacheLocation;
-  file: FileDetailsFragment;
+  file: FileDetailsFragment | undefined;
 };
 
 const cellMergingLogic = (value: TestSummaryDetailsTableRows) => {
@@ -92,15 +92,21 @@ export const testActionOutputColumns: TableColumnsType<TestSummaryDetailsTableRo
       key: "fileSize",
       title: "File size",
       width: "min",
-      render: (_, record) => readableFileSize(record.file.digest.sizeBytes),
+      render: (_, record) =>
+        record.file ? readableFileSize(record.file.digest.sizeBytes) : "-",
     },
     {
       key: "file",
       title: "File",
-      render: (_, record) => (
-        <a href={generateFileUrlFromGraphqlFile(record.file)}>
-          {record.file.filePath.path}
-        </a>
-      ),
+      render: (_, record) =>
+        record.file ? (
+          <a href={generateFileUrlFromGraphqlFile(record.file)}>
+            {record.file.filePath.path}
+          </a>
+        ) : (
+          <Typography.Text type="secondary">
+            No outputs recorded
+          </Typography.Text>
+        ),
     },
   ];
