@@ -36,6 +36,11 @@ pre {
   color-scheme: dark;
 }
 
+/* Clicking a chart focuses it; keep the focus ring for keyboard users only. */
+.recharts-surface:focus:not(:focus-visible) {
+  outline: none;
+}
+
 * {
   box-sizing: border-box;
   padding: 0;
