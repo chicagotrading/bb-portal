@@ -124,6 +124,7 @@ local adminAuthorizer = { allow: {} };
     },
     readAuthorizer: readAuthorizer,
     killOperationsAuthorizer: adminAuthorizer,
+    drainAuthorizer: adminAuthorizer,
     listOperationsPageSize: 500,
   },
 
