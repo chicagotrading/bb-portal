@@ -105,6 +105,35 @@ export const readableDurationFromProtobufDuration = (
   );
 };
 
+const SPELLED_OUT_UNITS = [
+  { name: "day", milliseconds: 86_400_000 },
+  { name: "hour", milliseconds: 3_600_000 },
+  { name: "minute", milliseconds: 60_000 },
+  { name: "second", milliseconds: 1_000 },
+  { name: "millisecond", milliseconds: 1 },
+];
+
+// Whole days to seconds from a minute up; milliseconds only below that.
+export const spelledOutDurationFromMilliseconds = (
+  totalMilliseconds: number,
+): string => {
+  let remaining = Math.round(totalMilliseconds);
+  const units =
+    remaining < 60_000 ? SPELLED_OUT_UNITS : SPELLED_OUT_UNITS.slice(0, -1);
+  if (remaining >= 60_000) {
+    remaining = Math.round(remaining / 1_000) * 1_000;
+  }
+  const parts: string[] = [];
+  for (const unit of units) {
+    const count = Math.floor(remaining / unit.milliseconds);
+    remaining -= count * unit.milliseconds;
+    if (count > 0) {
+      parts.push(`${count} ${unit.name}${count === 1 ? "" : "s"}`);
+    }
+  }
+  return parts.length > 0 ? parts.join(" ") : "0 milliseconds";
+};
+
 export const readableDurationFromDates = (
   start: Date,
   end: Date,
