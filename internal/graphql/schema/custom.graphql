@@ -10,6 +10,14 @@ extend type ConnectionMetadata {
   timeSinceLastConnectionMillis: Int! @goField(forceResolver: true)
 }
 
+extend type BazelInvocation {
+  """
+  Bazel command (build, test, query, ...) the invocation ran, as recorded in its
+  canonical command line.
+  """
+  command: String @goField(forceResolver: true)
+}
+
 extend input BazelInvocationWhereInput {
   """
   Bazel commands (build, test, query, ...) the invocation ran, as recorded in

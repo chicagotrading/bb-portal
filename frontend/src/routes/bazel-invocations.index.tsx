@@ -49,6 +49,7 @@ const BAZEL_INVOCATION_NODE_FRAGMENT = gql(/* GraphQL */ `
   fragment BazelInvocationNode on BazelInvocation {
     id
     invocationID
+    command
     startedAt
     username
     authenticatedUser {

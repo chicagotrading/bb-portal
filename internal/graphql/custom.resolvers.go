@@ -24,6 +24,14 @@ import (
 	"github.com/google/uuid"
 )
 
+// Command is the resolver for the command field.
+func (r *bazelInvocationResolver) Command(ctx context.Context, obj *ent.BazelInvocation) (*string, error) {
+	if obj.CanonicalCommandLine == nil || obj.CanonicalCommandLine.Command == "" {
+		return nil, nil
+	}
+	return &obj.CanonicalCommandLine.Command, nil
+}
+
 // TimeSinceLastConnectionMillis is the resolver for the timeSinceLastConnectionMillis field.
 func (r *connectionMetadataResolver) TimeSinceLastConnectionMillis(ctx context.Context, obj *ent.ConnectionMetadata) (int, error) {
 	return int(time.Since(obj.ConnectionLastOpenAt).Milliseconds()), nil

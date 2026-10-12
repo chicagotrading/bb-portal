@@ -213,6 +213,7 @@ type ComplexityRoot struct {
 		BepCompleted         func(childComplexity int) int
 		Build                func(childComplexity int) int
 		CanonicalCommandLine func(childComplexity int) int
+		Command              func(childComplexity int) int
 		Configurations       func(childComplexity int) int
 		ConnectionMetadata   func(childComplexity int) int
 		EndedAt              func(childComplexity int) int
@@ -740,6 +741,8 @@ type BazelInvocationResolver interface {
 	OriginalCommandLine(ctx context.Context, obj *ent.BazelInvocation) (map[string]any, error)
 	OptionsParsed(ctx context.Context, obj *ent.BazelInvocation) (map[string]any, error)
 	EnvironmentVariables(ctx context.Context, obj *ent.BazelInvocation) (map[string]any, error)
+
+	Command(ctx context.Context, obj *ent.BazelInvocation) (*string, error)
 }
 type BuildResolver interface {
 	ID(ctx context.Context, obj *ent.Build) (string, error)
@@ -1755,6 +1758,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.BazelInvocation.CanonicalCommandLine(childComplexity), true
+	case "BazelInvocation.command":
+		if e.ComplexityRoot.BazelInvocation.Command == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BazelInvocation.Command(childComplexity), true
 	case "BazelInvocation.configurations":
 		if e.ComplexityRoot.BazelInvocation.Configurations == nil {
 			break
@@ -4232,6 +4241,8 @@ func (ec *executionContext) childFields_BazelInvocation(ctx context.Context, fie
 		return ec.fieldContext_BazelInvocation_invocationTargets(ctx, field)
 	case "sourceControl":
 		return ec.fieldContext_BazelInvocation_sourceControl(ctx, field)
+	case "command":
+		return ec.fieldContext_BazelInvocation_command(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type BazelInvocation", field.Name)
 }
@@ -8129,6 +8140,29 @@ func (ec *executionContext) fieldContext_BazelInvocation_sourceControl(_ context
 		},
 	}
 	return fc, nil
+}
+
+func (ec *executionContext) _BazelInvocation_command(ctx context.Context, field graphql.CollectedField, obj *ent.BazelInvocation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_BazelInvocation_command(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.BazelInvocation().Command(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_BazelInvocation_command(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("BazelInvocation", field, true, true, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _BazelInvocationConnection_edges(ctx context.Context, field graphql.CollectedField, obj *ent.BazelInvocationConnection) (ret graphql.Marshaler) {
@@ -40491,6 +40525,42 @@ func (ec *executionContext) _BazelInvocation(ctx context.Context, sel ast.Select
 					}
 				}()
 				res = ec._BazelInvocation_sourceControl(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "command":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._BazelInvocation_command(ctx, field, obj)
 				if res == graphql.RequiredNull {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}

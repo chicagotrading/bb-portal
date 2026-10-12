@@ -3,6 +3,7 @@ import { Collapse, Descriptions, Space, Typography } from "antd";
 import type React from "react";
 import {
   buildColumn,
+  commandColumn,
   durationColumn,
   invocationIdColumn,
   startedAtColumn,
@@ -41,6 +42,7 @@ export const UserDetailsPage: React.FC<Props> = ({
 
   const tableColumns = [
     invocationIdColumn,
+    commandColumn,
     startedAtColumn,
     durationColumn,
     statusColumn,

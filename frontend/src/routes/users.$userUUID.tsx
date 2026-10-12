@@ -50,6 +50,7 @@ export const AUTHENTICATED_USER_NODE_FRAGMENT = gql(/* GraphQL */ `
         node {
           id
           invocationID
+          command
           build {
             id
             buildUUID

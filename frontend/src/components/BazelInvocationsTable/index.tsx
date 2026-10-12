@@ -3,6 +3,7 @@ import { Space, Typography } from "antd";
 import type React from "react";
 import {
   buildColumn,
+  commandColumn,
   durationColumn,
   instanceNameColumn,
   invocationIdColumn,
@@ -38,6 +39,7 @@ const getTableColumns = (): TableColumnTypeWithFilter<
 >[] => [
   userColumn,
   invocationIdColumn,
+  commandColumn,
   startedAtColumn,
   durationColumn,
   statusColumn,
