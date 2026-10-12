@@ -5,6 +5,7 @@
         {
           "node": {
             "build": null,
+            "command": "test",
             "connectionMetadata": null,
             "endedAt": "2024-05-03T00:24:29.605Z",
             "exitCodeName": "SUCCESS",

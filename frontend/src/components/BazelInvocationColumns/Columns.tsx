@@ -22,6 +22,7 @@ import type {
   BazelInvocationWhereInput,
 } from "@/graphql/__generated__/graphql";
 import type { TableColumnTypeWithFilter } from "@/types/TableColumnTypeWithFilter";
+import { BAZEL_COMMANDS } from "@/utils/bazelCommands";
 
 export const invocationIdColumn: TableColumnTypeWithFilter<
   BazelInvocationNodeFragment,
@@ -54,6 +55,28 @@ export const invocationIdColumn: TableColumnTypeWithFilter<
       return undefined;
     }
     return [{ invocationID: value[0] as string }];
+  },
+};
+
+export const commandColumn: TableColumnTypeWithFilter<
+  BazelInvocationNodeFragment,
+  BazelInvocationWhereInput
+> = {
+  key: "command",
+  width: 100,
+  title: "Command",
+  render: (_, record) =>
+    record.command && <CodeText>{record.command}</CodeText>,
+  filterIcon: (filtered) => (
+    <SearchFilterIcon icon={<SearchOutlined />} filtered={filtered} />
+  ),
+  filterDropdown: (filterProps) => <FilterPickerDropdown {...filterProps} />,
+  filters: BAZEL_COMMANDS.map((command) => ({ text: command, value: command })),
+  applyFilter: (value: FilterValue) => {
+    if (value.length === 0) {
+      return undefined;
+    }
+    return [{ commandIn: value as string[] }];
   },
 };
 

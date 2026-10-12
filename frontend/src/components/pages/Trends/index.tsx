@@ -31,6 +31,7 @@ import {
   OrderDirection,
 } from "@/graphql/__generated__/graphql";
 import dayjs from "@/lib/dayjs";
+import { BAZEL_COMMANDS } from "@/utils/bazelCommands";
 import {
   readableDurationFromMilliseconds,
   spelledOutDurationFromMilliseconds,
@@ -71,17 +72,6 @@ interface DistributionBin {
   density: number;
   cumulative: number;
 }
-
-const BAZEL_COMMANDS = [
-  "build",
-  "test",
-  "run",
-  "coverage",
-  "query",
-  "cquery",
-  "aquery",
-  "fetch",
-];
 
 export const TrendsPage: React.FC = () => {
   const { token } = theme.useToken();
