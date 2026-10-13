@@ -34,9 +34,11 @@ type InstanceNameEdges struct {
 	Targets []*Target `json:"targets,omitempty"`
 	// FilePaths holds the value of the file_paths edge.
 	FilePaths []*FilePath `json:"file_paths,omitempty"`
+	// ActionKeys holds the value of the action_keys edge.
+	ActionKeys []*ActionKey `json:"action_keys,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [5]bool
 	// totalCount holds the count of the edges above.
 	totalCount [4]map[string]int
 
@@ -44,6 +46,7 @@ type InstanceNameEdges struct {
 	namedBuilds           map[string][]*Build
 	namedTargets          map[string][]*Target
 	namedFilePaths        map[string][]*FilePath
+	namedActionKeys       map[string][]*ActionKey
 }
 
 // BazelInvocationsOrErr returns the BazelInvocations value or an error if the edge
@@ -80,6 +83,15 @@ func (e InstanceNameEdges) FilePathsOrErr() ([]*FilePath, error) {
 		return e.FilePaths, nil
 	}
 	return nil, &NotLoadedError{edge: "file_paths"}
+}
+
+// ActionKeysOrErr returns the ActionKeys value or an error if the edge
+// was not loaded in eager-loading.
+func (e InstanceNameEdges) ActionKeysOrErr() ([]*ActionKey, error) {
+	if e.loadedTypes[4] {
+		return e.ActionKeys, nil
+	}
+	return nil, &NotLoadedError{edge: "action_keys"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -149,6 +161,11 @@ func (_m *InstanceName) QueryTargets() *TargetQuery {
 // QueryFilePaths queries the "file_paths" edge of the InstanceName entity.
 func (_m *InstanceName) QueryFilePaths() *FilePathQuery {
 	return NewInstanceNameClient(_m.config).QueryFilePaths(_m)
+}
+
+// QueryActionKeys queries the "action_keys" edge of the InstanceName entity.
+func (_m *InstanceName) QueryActionKeys() *ActionKeyQuery {
+	return NewInstanceNameClient(_m.config).QueryActionKeys(_m)
 }
 
 // Update returns a builder for updating this InstanceName.
@@ -273,6 +290,30 @@ func (_m *InstanceName) appendNamedFilePaths(name string, edges ...*FilePath) {
 		_m.Edges.namedFilePaths[name] = []*FilePath{}
 	} else {
 		_m.Edges.namedFilePaths[name] = append(_m.Edges.namedFilePaths[name], edges...)
+	}
+}
+
+// NamedActionKeys returns the ActionKeys named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (_m *InstanceName) NamedActionKeys(name string) ([]*ActionKey, error) {
+	if _m.Edges.namedActionKeys == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := _m.Edges.namedActionKeys[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (_m *InstanceName) appendNamedActionKeys(name string, edges ...*ActionKey) {
+	if _m.Edges.namedActionKeys == nil {
+		_m.Edges.namedActionKeys = make(map[string][]*ActionKey)
+	}
+	if len(edges) == 0 {
+		_m.Edges.namedActionKeys[name] = []*ActionKey{}
+	} else {
+		_m.Edges.namedActionKeys[name] = append(_m.Edges.namedActionKeys[name], edges...)
 	}
 }
 

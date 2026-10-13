@@ -35,6 +35,7 @@ type FileQuery struct {
 	withActionStdout               *ActionQuery
 	withActionStderr               *ActionQuery
 	withInvocationProfile          *BazelInvocationQuery
+	withInvocationExecLog          *BazelInvocationQuery
 	withTestActionOutput           *TestResultQuery
 	withTestActionOutputTable      *TestActionOutputQuery
 	modifiers                      []func(*sql.Selector)
@@ -42,6 +43,7 @@ type FileQuery struct {
 	withNamedActionStdout          map[string]*ActionQuery
 	withNamedActionStderr          map[string]*ActionQuery
 	withNamedInvocationProfile     map[string]*BazelInvocationQuery
+	withNamedInvocationExecLog     map[string]*BazelInvocationQuery
 	withNamedTestActionOutput      map[string]*TestResultQuery
 	withNamedTestActionOutputTable map[string]*TestActionOutputQuery
 	// intermediate query (i.e. traversal path).
@@ -183,6 +185,28 @@ func (_q *FileQuery) QueryInvocationProfile() *BazelInvocationQuery {
 			sqlgraph.From(file.Table, file.FieldID, selector),
 			sqlgraph.To(bazelinvocation.Table, bazelinvocation.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, true, file.InvocationProfileTable, file.InvocationProfileColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryInvocationExecLog chains the current query on the "invocation_exec_log" edge.
+func (_q *FileQuery) QueryInvocationExecLog() *BazelInvocationQuery {
+	query := (&BazelInvocationClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(file.Table, file.FieldID, selector),
+			sqlgraph.To(bazelinvocation.Table, bazelinvocation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, file.InvocationExecLogTable, file.InvocationExecLogColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -431,6 +455,7 @@ func (_q *FileQuery) Clone() *FileQuery {
 		withActionStdout:          _q.withActionStdout.Clone(),
 		withActionStderr:          _q.withActionStderr.Clone(),
 		withInvocationProfile:     _q.withInvocationProfile.Clone(),
+		withInvocationExecLog:     _q.withInvocationExecLog.Clone(),
 		withTestActionOutput:      _q.withTestActionOutput.Clone(),
 		withTestActionOutputTable: _q.withTestActionOutputTable.Clone(),
 		// clone intermediate query.
@@ -491,6 +516,17 @@ func (_q *FileQuery) WithInvocationProfile(opts ...func(*BazelInvocationQuery)) 
 		opt(query)
 	}
 	_q.withInvocationProfile = query
+	return _q
+}
+
+// WithInvocationExecLog tells the query-builder to eager-load the nodes that are connected to
+// the "invocation_exec_log" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *FileQuery) WithInvocationExecLog(opts ...func(*BazelInvocationQuery)) *FileQuery {
+	query := (&BazelInvocationClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withInvocationExecLog = query
 	return _q
 }
 
@@ -600,12 +636,13 @@ func (_q *FileQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*File, e
 	var (
 		nodes       = []*File{}
 		_spec       = _q.querySpec()
-		loadedTypes = [7]bool{
+		loadedTypes = [8]bool{
 			_q.withDigest != nil,
 			_q.withFilePath != nil,
 			_q.withActionStdout != nil,
 			_q.withActionStderr != nil,
 			_q.withInvocationProfile != nil,
+			_q.withInvocationExecLog != nil,
 			_q.withTestActionOutput != nil,
 			_q.withTestActionOutputTable != nil,
 		}
@@ -664,6 +701,13 @@ func (_q *FileQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*File, e
 			return nil, err
 		}
 	}
+	if query := _q.withInvocationExecLog; query != nil {
+		if err := _q.loadInvocationExecLog(ctx, query, nodes,
+			func(n *File) { n.Edges.InvocationExecLog = []*BazelInvocation{} },
+			func(n *File, e *BazelInvocation) { n.Edges.InvocationExecLog = append(n.Edges.InvocationExecLog, e) }); err != nil {
+			return nil, err
+		}
+	}
 	if query := _q.withTestActionOutput; query != nil {
 		if err := _q.loadTestActionOutput(ctx, query, nodes,
 			func(n *File) { n.Edges.TestActionOutput = []*TestResult{} },
@@ -698,6 +742,13 @@ func (_q *FileQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*File, e
 		if err := _q.loadInvocationProfile(ctx, query, nodes,
 			func(n *File) { n.appendNamedInvocationProfile(name) },
 			func(n *File, e *BazelInvocation) { n.appendNamedInvocationProfile(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range _q.withNamedInvocationExecLog {
+		if err := _q.loadInvocationExecLog(ctx, query, nodes,
+			func(n *File) { n.appendNamedInvocationExecLog(name) },
+			func(n *File, e *BazelInvocation) { n.appendNamedInvocationExecLog(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -867,6 +918,37 @@ func (_q *FileQuery) loadInvocationProfile(ctx context.Context, query *BazelInvo
 		node, ok := nodeids[fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "profile_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *FileQuery) loadInvocationExecLog(ctx context.Context, query *BazelInvocationQuery, nodes []*File, init func(*File), assign func(*File, *BazelInvocation)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*File)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(bazelinvocation.FieldExecLogID)
+	}
+	query.Where(predicate.BazelInvocation(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(file.InvocationExecLogColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.ExecLogID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "exec_log_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}
@@ -1093,6 +1175,20 @@ func (_q *FileQuery) WithNamedInvocationProfile(name string, opts ...func(*Bazel
 		_q.withNamedInvocationProfile = make(map[string]*BazelInvocationQuery)
 	}
 	_q.withNamedInvocationProfile[name] = query
+	return _q
+}
+
+// WithNamedInvocationExecLog tells the query-builder to eager-load the nodes that are connected to the "invocation_exec_log"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (_q *FileQuery) WithNamedInvocationExecLog(name string, opts ...func(*BazelInvocationQuery)) *FileQuery {
+	query := (&BazelInvocationClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if _q.withNamedInvocationExecLog == nil {
+		_q.withNamedInvocationExecLog = make(map[string]*BazelInvocationQuery)
+	}
+	_q.withNamedInvocationExecLog[name] = query
 	return _q
 }
 

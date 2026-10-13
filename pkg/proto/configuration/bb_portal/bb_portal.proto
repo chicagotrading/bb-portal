@@ -261,6 +261,33 @@ message FrontendService {
       2;
 }
 
+message ExecLogIngestService {
+  // How often to look for invocations whose compact execution log
+  // (--execution_log_compact_file) has not been ingested yet.
+  // Recommended value: '30s'
+  google.protobuf.Duration poll_interval = 1;
+
+  // How long to keep action versions that no ingested log has referenced.
+  // Kept invocations refer to versions, so this must be at least the
+  // invocation retention of the database cleanup configuration plus two
+  // days, which bb_portal checks at startup. If zero, versions are kept
+  // forever.
+  // Recommended value: '864000s' (i.e., 10 days, for a 7 day invocation
+  // retention)
+  google.protobuf.Duration version_retention = 2;
+
+  // Logs with a larger compressed size are marked as failed instead of
+  // being ingested. If zero, no limit applies.
+  // Recommended value: 134217728 (i.e., 128 MiB)
+  int64 maximum_log_size_bytes = 3;
+
+  // Logs that decompress to more are marked as failed. Parsing takes
+  // about 0.8 bytes of memory per decompressed byte. If zero, no limit
+  // applies.
+  // Recommended value: 2147483648 (i.e., 2 GiB)
+  int64 maximum_decompressed_log_size_bytes = 4;
+}
+
 // Authorized storage configuration.
 message StorageBlobAccessConfiguration {
   buildbarn.configuration.blobstore.BlobAccessConfiguration backend = 1;
@@ -330,4 +357,10 @@ message ApplicationConfiguration {
   // Config for the Graphql API. If not configured, no Graphql API will be
   // served, and the Build Event Stream parts of the frontend will not work.
   GraphqlApiService graphql_api_service_configuration = 17;
+
+  // Config for ingesting compact execution logs published as build tool
+  // logs into the action insights tables. Requires the database and the
+  // Content Addressable Storage. If omitted, execution logs are not
+  // ingested.
+  ExecLogIngestService exec_log_ingest_service_configuration = 18;
 }

@@ -18,6 +18,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	// Needed to avoid cyclic dependencies in ent (https://entgo.io/docs/privacy#privacy-policy-registration)
+	"github.com/buildbarn/bb-portal/ent/gen/ent/execlogsummary"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/invocationtarget"
 	_ "github.com/buildbarn/bb-portal/ent/gen/ent/runtime"
 )
@@ -231,4 +232,45 @@ func TestPrivacy(t *testing.T) {
 		require.Contains(t, testSummaries, allowed1TestSummary.ID)
 		require.Contains(t, testSummaries, allowed2TestSummary.ID)
 	})
+}
+
+func TestActionInsightsPrivacy(t *testing.T) {
+	ctrl, ctx := gomock.WithContext(context.Background(), t)
+	clock := mock.NewMockClock(ctrl)
+	clock.EXPECT().Now().Return(time.Unix(10000000, 0)).AnyTimes()
+	db := testutils.SetupTestDB(t, dbProvider).Ent()
+
+	authorizer := auth.NewJMESPathExpressionAuthorizer(
+		jmespath.MustCompile("instanceName == 'allowed'"),
+	)
+	authCtx := dbauthservice.NewContextWithDbAuthService(ctx, dbauthservice.NewDbAuthService(db, clock, authorizer, time.Second*5))
+	bypassCtx := dbauthservice.NewContextWithDbAuthServiceBypass(ctx)
+
+	create := func(name string) (int64, int64, int64, int64) {
+		instance := testutils.CreateInstanceName(bypassCtx, t, db, name)
+		inv := testutils.StartCreateInvocation(db, instance).SaveX(bypassCtx)
+		key := db.ActionKey.Create().SetInstanceName(instance).SetTargetLabel("//a:b").SetMnemonic("Genrule").SetPrimaryOutput("out").SaveX(bypassCtx)
+		version := db.ActionVersion.Create().SetActionKey(key).SetDigestHash([]byte{1}).SetDigestSizeBytes(1).SetFirstSeenAt(time.Now()).SetLastSeenAt(time.Now()).SaveX(bypassCtx)
+		summary := db.ExecLogSummary.Create().SetBazelInvocation(inv).SetStatus(execlogsummary.StatusDONE).SetStartedAt(time.Now()).SaveX(bypassCtx)
+		execution := db.ActionExecution.Create().SetBazelInvocation(inv).SetActionKey(key).SetActionVersion(version).SaveX(bypassCtx)
+		return key.ID, version.ID, summary.ID, execution.ID
+	}
+	create("denied")
+	key, version, summary, execution := create("allowed")
+
+	keys, err := db.ActionKey.Query().IDs(authCtx)
+	require.NoError(t, err)
+	require.Equal(t, []int64{key}, keys)
+
+	versions, err := db.ActionVersion.Query().IDs(authCtx)
+	require.NoError(t, err)
+	require.Equal(t, []int64{version}, versions)
+
+	summaries, err := db.ExecLogSummary.Query().IDs(authCtx)
+	require.NoError(t, err)
+	require.Equal(t, []int64{summary}, summaries)
+
+	executions, err := db.ActionExecution.Query().IDs(authCtx)
+	require.NoError(t, err)
+	require.Equal(t, []int64{execution}, executions)
 }

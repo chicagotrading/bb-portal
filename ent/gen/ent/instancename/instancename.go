@@ -22,6 +22,8 @@ const (
 	EdgeTargets = "targets"
 	// EdgeFilePaths holds the string denoting the file_paths edge name in mutations.
 	EdgeFilePaths = "file_paths"
+	// EdgeActionKeys holds the string denoting the action_keys edge name in mutations.
+	EdgeActionKeys = "action_keys"
 	// Table holds the table name of the instancename in the database.
 	Table = "instance_names"
 	// BazelInvocationsTable is the table that holds the bazel_invocations relation/edge.
@@ -52,6 +54,13 @@ const (
 	FilePathsInverseTable = "file_paths"
 	// FilePathsColumn is the table column denoting the file_paths relation/edge.
 	FilePathsColumn = "bep_instance_name_id"
+	// ActionKeysTable is the table that holds the action_keys relation/edge.
+	ActionKeysTable = "action_keys"
+	// ActionKeysInverseTable is the table name for the ActionKey entity.
+	// It exists in this package in order to avoid circular dependency with the "actionkey" package.
+	ActionKeysInverseTable = "action_keys"
+	// ActionKeysColumn is the table column denoting the action_keys relation/edge.
+	ActionKeysColumn = "instance_name_id"
 )
 
 // Columns holds all SQL columns for instancename fields.
@@ -138,6 +147,20 @@ func ByFilePaths(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newFilePathsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByActionKeysCount orders the results by action_keys count.
+func ByActionKeysCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newActionKeysStep(), opts...)
+	}
+}
+
+// ByActionKeys orders the results by action_keys terms.
+func ByActionKeys(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newActionKeysStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newBazelInvocationsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -164,5 +187,12 @@ func newFilePathsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(FilePathsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, FilePathsTable, FilePathsColumn),
+	)
+}
+func newActionKeysStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ActionKeysInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ActionKeysTable, ActionKeysColumn),
 	)
 }

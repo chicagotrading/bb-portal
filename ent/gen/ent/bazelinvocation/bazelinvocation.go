@@ -31,6 +31,8 @@ const (
 	FieldNumFetches = "num_fetches"
 	// FieldProfileID holds the string denoting the profile_id field in the database.
 	FieldProfileID = "profile_id"
+	// FieldExecLogID holds the string denoting the exec_log_id field in the database.
+	FieldExecLogID = "exec_log_id"
 	// FieldBazelVersion holds the string denoting the bazel_version field in the database.
 	FieldBazelVersion = "bazel_version"
 	// FieldExitCodeName holds the string denoting the exit_code_name field in the database.
@@ -77,6 +79,12 @@ const (
 	EdgeBuildLogChunks = "build_log_chunks"
 	// EdgeProfile holds the string denoting the profile edge name in mutations.
 	EdgeProfile = "profile"
+	// EdgeExecLog holds the string denoting the exec_log edge name in mutations.
+	EdgeExecLog = "exec_log"
+	// EdgeExecLogSummary holds the string denoting the exec_log_summary edge name in mutations.
+	EdgeExecLogSummary = "exec_log_summary"
+	// EdgeActionExecutions holds the string denoting the action_executions edge name in mutations.
+	EdgeActionExecutions = "action_executions"
 	// EdgeInvocationTargets holds the string denoting the invocation_targets edge name in mutations.
 	EdgeInvocationTargets = "invocation_targets"
 	// EdgeTargetKindMappings holds the string denoting the target_kind_mappings edge name in mutations.
@@ -169,6 +177,27 @@ const (
 	ProfileInverseTable = "files"
 	// ProfileColumn is the table column denoting the profile relation/edge.
 	ProfileColumn = "profile_id"
+	// ExecLogTable is the table that holds the exec_log relation/edge.
+	ExecLogTable = "bazel_invocations"
+	// ExecLogInverseTable is the table name for the File entity.
+	// It exists in this package in order to avoid circular dependency with the "file" package.
+	ExecLogInverseTable = "files"
+	// ExecLogColumn is the table column denoting the exec_log relation/edge.
+	ExecLogColumn = "exec_log_id"
+	// ExecLogSummaryTable is the table that holds the exec_log_summary relation/edge.
+	ExecLogSummaryTable = "exec_log_summaries"
+	// ExecLogSummaryInverseTable is the table name for the ExecLogSummary entity.
+	// It exists in this package in order to avoid circular dependency with the "execlogsummary" package.
+	ExecLogSummaryInverseTable = "exec_log_summaries"
+	// ExecLogSummaryColumn is the table column denoting the exec_log_summary relation/edge.
+	ExecLogSummaryColumn = "bazel_invocation_id"
+	// ActionExecutionsTable is the table that holds the action_executions relation/edge.
+	ActionExecutionsTable = "action_executions"
+	// ActionExecutionsInverseTable is the table name for the ActionExecution entity.
+	// It exists in this package in order to avoid circular dependency with the "actionexecution" package.
+	ActionExecutionsInverseTable = "action_executions"
+	// ActionExecutionsColumn is the table column denoting the action_executions relation/edge.
+	ActionExecutionsColumn = "bazel_invocation_id"
 	// InvocationTargetsTable is the table that holds the invocation_targets relation/edge.
 	InvocationTargetsTable = "invocation_targets"
 	// InvocationTargetsInverseTable is the table name for the InvocationTarget entity.
@@ -204,6 +233,7 @@ var Columns = []string{
 	FieldHostname,
 	FieldNumFetches,
 	FieldProfileID,
+	FieldExecLogID,
 	FieldBazelVersion,
 	FieldExitCodeName,
 	FieldExitCodeCode,
@@ -311,6 +341,11 @@ func ByNumFetches(opts ...sql.OrderTermOption) OrderOption {
 // ByProfileID orders the results by the profile_id field.
 func ByProfileID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldProfileID, opts...).ToFunc()
+}
+
+// ByExecLogID orders the results by the exec_log_id field.
+func ByExecLogID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldExecLogID, opts...).ToFunc()
 }
 
 // ByBazelVersion orders the results by the bazel_version field.
@@ -467,6 +502,34 @@ func ByProfileField(field string, opts ...sql.OrderTermOption) OrderOption {
 	}
 }
 
+// ByExecLogField orders the results by exec_log field.
+func ByExecLogField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newExecLogStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByExecLogSummaryField orders the results by exec_log_summary field.
+func ByExecLogSummaryField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newExecLogSummaryStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByActionExecutionsCount orders the results by action_executions count.
+func ByActionExecutionsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newActionExecutionsStep(), opts...)
+	}
+}
+
+// ByActionExecutions orders the results by action_executions terms.
+func ByActionExecutions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newActionExecutionsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByInvocationTargetsCount orders the results by invocation_targets count.
 func ByInvocationTargetsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -590,6 +653,27 @@ func newProfileStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ProfileInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, ProfileTable, ProfileColumn),
+	)
+}
+func newExecLogStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ExecLogInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, ExecLogTable, ExecLogColumn),
+	)
+}
+func newExecLogSummaryStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ExecLogSummaryInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, ExecLogSummaryTable, ExecLogSummaryColumn),
+	)
+}
+func newActionExecutionsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ActionExecutionsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ActionExecutionsTable, ActionExecutionsColumn),
 	)
 }
 func newInvocationTargetsStep() *sqlgraph.Step {

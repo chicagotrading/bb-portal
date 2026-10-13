@@ -18,6 +18,7 @@ import (
 	"github.com/buildbarn/bb-portal/internal/database"
 	"github.com/buildbarn/bb-portal/internal/database/common"
 	"github.com/buildbarn/bb-portal/internal/database/dbcleanupservice"
+	"github.com/buildbarn/bb-portal/internal/database/execlogingest"
 	"github.com/buildbarn/bb-portal/pkg/frontend"
 	"github.com/buildbarn/bb-portal/pkg/grpcweb/blobstoreservice"
 	"github.com/buildbarn/bb-portal/pkg/grpcweb/schedulerservice"
@@ -130,6 +131,25 @@ func main() {
 			return util.StatusWrap(err, "Failed to create Blob Access")
 		}
 
+		// Configure the execution log ingestion, if configured
+		var execLogIngestService *execlogingest.Service
+		if configuration.ExecLogIngestServiceConfiguration != nil {
+			var cas blobstore.BlobAccess
+			if blobAccess.UnauthorizedContentAddressableStorage != nil {
+				cas = *blobAccess.UnauthorizedContentAddressableStorage
+			}
+			if execLogIngestService, err = execlogingest.NewService(
+				dbClient,
+				cas,
+				clock.SystemClock,
+				configuration.ExecLogIngestServiceConfiguration,
+				configuration.GetDatabase().GetCleanupConfiguration().GetInvocationRetention().AsDuration(),
+				tracerProvider,
+			); err != nil {
+				return util.StatusWrap(err, "Failed to create execution log ingestion service")
+			}
+		}
+
 		// Setup http router, if configured
 		var router *http.ServeMux
 		if len(configuration.HttpServers) != 0 {
@@ -237,6 +257,10 @@ func main() {
 		// in the middle of the first cleanup.
 		if dbCleanupService != nil {
 			dbCleanupService.StartDbCleanupService(ctx, dependenciesGroup)
+		}
+
+		if execLogIngestService != nil {
+			execLogIngestService.Start(dependenciesGroup)
 		}
 
 		lifecycleState.MarkReadyAndWait(siblingsGroup)

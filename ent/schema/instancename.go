@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"entgo.io/contrib/entgql"
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
@@ -25,6 +26,7 @@ func (InstanceName) Edges() []ent.Edge {
 		edge.To("builds", Build.Type),
 		edge.To("targets", Target.Type),
 		edge.To("file_paths", FilePath.Type),
+		edge.To("action_keys", ActionKey.Type).Annotations(entgql.Skip()),
 	}
 }
 

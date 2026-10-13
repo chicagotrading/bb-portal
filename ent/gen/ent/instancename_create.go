@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/buildbarn/bb-portal/ent/gen/ent/actionkey"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/bazelinvocation"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/build"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/filepath"
@@ -95,6 +96,21 @@ func (_c *InstanceNameCreate) AddFilePaths(v ...*FilePath) *InstanceNameCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddFilePathIDs(ids...)
+}
+
+// AddActionKeyIDs adds the "action_keys" edge to the ActionKey entity by IDs.
+func (_c *InstanceNameCreate) AddActionKeyIDs(ids ...int64) *InstanceNameCreate {
+	_c.mutation.AddActionKeyIDs(ids...)
+	return _c
+}
+
+// AddActionKeys adds the "action_keys" edges to the ActionKey entity.
+func (_c *InstanceNameCreate) AddActionKeys(v ...*ActionKey) *InstanceNameCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddActionKeyIDs(ids...)
 }
 
 // Mutation returns the InstanceNameMutation object of the builder.
@@ -228,6 +244,22 @@ func (_c *InstanceNameCreate) createSpec() (*InstanceName, *sqlgraph.CreateSpec)
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(filepath.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.ActionKeysIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   instancename.ActionKeysTable,
+			Columns: []string{instancename.ActionKeysColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(actionkey.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

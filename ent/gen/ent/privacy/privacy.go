@@ -183,6 +183,54 @@ func (f ActionDataMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Muta
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.ActionDataMutation", m)
 }
 
+// The ActionExecutionQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type ActionExecutionQueryRuleFunc func(context.Context, *ent.ActionExecutionQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f ActionExecutionQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.ActionExecutionQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.ActionExecutionQuery", q)
+}
+
+// The ActionExecutionMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type ActionExecutionMutationRuleFunc func(context.Context, *ent.ActionExecutionMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f ActionExecutionMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.ActionExecutionMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.ActionExecutionMutation", m)
+}
+
+// The ActionKeyQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type ActionKeyQueryRuleFunc func(context.Context, *ent.ActionKeyQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f ActionKeyQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.ActionKeyQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.ActionKeyQuery", q)
+}
+
+// The ActionKeyMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type ActionKeyMutationRuleFunc func(context.Context, *ent.ActionKeyMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f ActionKeyMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.ActionKeyMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.ActionKeyMutation", m)
+}
+
 // The ActionSummaryQueryRuleFunc type is an adapter to allow the use of ordinary
 // functions as a query rule.
 type ActionSummaryQueryRuleFunc func(context.Context, *ent.ActionSummaryQuery) error
@@ -205,6 +253,30 @@ func (f ActionSummaryMutationRuleFunc) EvalMutation(ctx context.Context, m ent.M
 		return f(ctx, m)
 	}
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.ActionSummaryMutation", m)
+}
+
+// The ActionVersionQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type ActionVersionQueryRuleFunc func(context.Context, *ent.ActionVersionQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f ActionVersionQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.ActionVersionQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.ActionVersionQuery", q)
+}
+
+// The ActionVersionMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type ActionVersionMutationRuleFunc func(context.Context, *ent.ActionVersionMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f ActionVersionMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.ActionVersionMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.ActionVersionMutation", m)
 }
 
 // The ArtifactMetricsQueryRuleFunc type is an adapter to allow the use of ordinary
@@ -613,6 +685,30 @@ func (f EventMetadataMutationRuleFunc) EvalMutation(ctx context.Context, m ent.M
 		return f(ctx, m)
 	}
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.EventMetadataMutation", m)
+}
+
+// The ExecLogSummaryQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type ExecLogSummaryQueryRuleFunc func(context.Context, *ent.ExecLogSummaryQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f ExecLogSummaryQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.ExecLogSummaryQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.ExecLogSummaryQuery", q)
+}
+
+// The ExecLogSummaryMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type ExecLogSummaryMutationRuleFunc func(context.Context, *ent.ExecLogSummaryMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f ExecLogSummaryMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.ExecLogSummaryMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.ExecLogSummaryMutation", m)
 }
 
 // The FileQueryRuleFunc type is an adapter to allow the use of ordinary
@@ -1352,7 +1448,13 @@ func queryFilter(q ent.Query) (Filter, error) {
 		return q.Filter(), nil
 	case *ent.ActionDataQuery:
 		return q.Filter(), nil
+	case *ent.ActionExecutionQuery:
+		return q.Filter(), nil
+	case *ent.ActionKeyQuery:
+		return q.Filter(), nil
 	case *ent.ActionSummaryQuery:
+		return q.Filter(), nil
+	case *ent.ActionVersionQuery:
 		return q.Filter(), nil
 	case *ent.ArtifactMetricsQuery:
 		return q.Filter(), nil
@@ -1387,6 +1489,8 @@ func queryFilter(q ent.Query) (Filter, error) {
 	case *ent.DynamicExecutionRaceStatisticQuery:
 		return q.Filter(), nil
 	case *ent.EventMetadataQuery:
+		return q.Filter(), nil
+	case *ent.ExecLogSummaryQuery:
 		return q.Filter(), nil
 	case *ent.FileQuery:
 		return q.Filter(), nil
@@ -1459,7 +1563,13 @@ func mutationFilter(m ent.Mutation) (Filter, error) {
 		return m.Filter(), nil
 	case *ent.ActionDataMutation:
 		return m.Filter(), nil
+	case *ent.ActionExecutionMutation:
+		return m.Filter(), nil
+	case *ent.ActionKeyMutation:
+		return m.Filter(), nil
 	case *ent.ActionSummaryMutation:
+		return m.Filter(), nil
+	case *ent.ActionVersionMutation:
 		return m.Filter(), nil
 	case *ent.ArtifactMetricsMutation:
 		return m.Filter(), nil
@@ -1494,6 +1604,8 @@ func mutationFilter(m ent.Mutation) (Filter, error) {
 	case *ent.DynamicExecutionRaceStatisticMutation:
 		return m.Filter(), nil
 	case *ent.EventMetadataMutation:
+		return m.Filter(), nil
+	case *ent.ExecLogSummaryMutation:
 		return m.Filter(), nil
 	case *ent.FileMutation:
 		return m.Filter(), nil

@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/buildbarn/bb-portal/ent/gen/ent/actionkey"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/bazelinvocation"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/build"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/filepath"
@@ -89,6 +90,21 @@ func (_u *InstanceNameUpdate) AddFilePaths(v ...*FilePath) *InstanceNameUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.AddFilePathIDs(ids...)
+}
+
+// AddActionKeyIDs adds the "action_keys" edge to the ActionKey entity by IDs.
+func (_u *InstanceNameUpdate) AddActionKeyIDs(ids ...int64) *InstanceNameUpdate {
+	_u.mutation.AddActionKeyIDs(ids...)
+	return _u
+}
+
+// AddActionKeys adds the "action_keys" edges to the ActionKey entity.
+func (_u *InstanceNameUpdate) AddActionKeys(v ...*ActionKey) *InstanceNameUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddActionKeyIDs(ids...)
 }
 
 // Mutation returns the InstanceNameMutation object of the builder.
@@ -178,6 +194,27 @@ func (_u *InstanceNameUpdate) RemoveFilePaths(v ...*FilePath) *InstanceNameUpdat
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveFilePathIDs(ids...)
+}
+
+// ClearActionKeys clears all "action_keys" edges to the ActionKey entity.
+func (_u *InstanceNameUpdate) ClearActionKeys() *InstanceNameUpdate {
+	_u.mutation.ClearActionKeys()
+	return _u
+}
+
+// RemoveActionKeyIDs removes the "action_keys" edge to ActionKey entities by IDs.
+func (_u *InstanceNameUpdate) RemoveActionKeyIDs(ids ...int64) *InstanceNameUpdate {
+	_u.mutation.RemoveActionKeyIDs(ids...)
+	return _u
+}
+
+// RemoveActionKeys removes "action_keys" edges to ActionKey entities.
+func (_u *InstanceNameUpdate) RemoveActionKeys(v ...*ActionKey) *InstanceNameUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveActionKeyIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -396,6 +433,51 @@ func (_u *InstanceNameUpdate) sqlSave(ctx context.Context) (_node int, err error
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.ActionKeysCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   instancename.ActionKeysTable,
+			Columns: []string{instancename.ActionKeysColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(actionkey.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedActionKeysIDs(); len(nodes) > 0 && !_u.mutation.ActionKeysCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   instancename.ActionKeysTable,
+			Columns: []string{instancename.ActionKeysColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(actionkey.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ActionKeysIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   instancename.ActionKeysTable,
+			Columns: []string{instancename.ActionKeysColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(actionkey.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{instancename.Label}
@@ -474,6 +556,21 @@ func (_u *InstanceNameUpdateOne) AddFilePaths(v ...*FilePath) *InstanceNameUpdat
 		ids[i] = v[i].ID
 	}
 	return _u.AddFilePathIDs(ids...)
+}
+
+// AddActionKeyIDs adds the "action_keys" edge to the ActionKey entity by IDs.
+func (_u *InstanceNameUpdateOne) AddActionKeyIDs(ids ...int64) *InstanceNameUpdateOne {
+	_u.mutation.AddActionKeyIDs(ids...)
+	return _u
+}
+
+// AddActionKeys adds the "action_keys" edges to the ActionKey entity.
+func (_u *InstanceNameUpdateOne) AddActionKeys(v ...*ActionKey) *InstanceNameUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddActionKeyIDs(ids...)
 }
 
 // Mutation returns the InstanceNameMutation object of the builder.
@@ -563,6 +660,27 @@ func (_u *InstanceNameUpdateOne) RemoveFilePaths(v ...*FilePath) *InstanceNameUp
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveFilePathIDs(ids...)
+}
+
+// ClearActionKeys clears all "action_keys" edges to the ActionKey entity.
+func (_u *InstanceNameUpdateOne) ClearActionKeys() *InstanceNameUpdateOne {
+	_u.mutation.ClearActionKeys()
+	return _u
+}
+
+// RemoveActionKeyIDs removes the "action_keys" edge to ActionKey entities by IDs.
+func (_u *InstanceNameUpdateOne) RemoveActionKeyIDs(ids ...int64) *InstanceNameUpdateOne {
+	_u.mutation.RemoveActionKeyIDs(ids...)
+	return _u
+}
+
+// RemoveActionKeys removes "action_keys" edges to ActionKey entities.
+func (_u *InstanceNameUpdateOne) RemoveActionKeys(v ...*ActionKey) *InstanceNameUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveActionKeyIDs(ids...)
 }
 
 // Where appends a list predicates to the InstanceNameUpdate builder.
@@ -804,6 +922,51 @@ func (_u *InstanceNameUpdateOne) sqlSave(ctx context.Context) (_node *InstanceNa
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(filepath.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ActionKeysCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   instancename.ActionKeysTable,
+			Columns: []string{instancename.ActionKeysColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(actionkey.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedActionKeysIDs(); len(nodes) > 0 && !_u.mutation.ActionKeysCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   instancename.ActionKeysTable,
+			Columns: []string{instancename.ActionKeysColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(actionkey.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ActionKeysIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   instancename.ActionKeysTable,
+			Columns: []string{instancename.ActionKeysColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(actionkey.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

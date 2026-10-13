@@ -45,6 +45,30 @@ func (f ActionDataFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, 
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ActionDataMutation", m)
 }
 
+// The ActionExecutionFunc type is an adapter to allow the use of ordinary
+// function as ActionExecution mutator.
+type ActionExecutionFunc func(context.Context, *ent.ActionExecutionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ActionExecutionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ActionExecutionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ActionExecutionMutation", m)
+}
+
+// The ActionKeyFunc type is an adapter to allow the use of ordinary
+// function as ActionKey mutator.
+type ActionKeyFunc func(context.Context, *ent.ActionKeyMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ActionKeyFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ActionKeyMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ActionKeyMutation", m)
+}
+
 // The ActionSummaryFunc type is an adapter to allow the use of ordinary
 // function as ActionSummary mutator.
 type ActionSummaryFunc func(context.Context, *ent.ActionSummaryMutation) (ent.Value, error)
@@ -55,6 +79,18 @@ func (f ActionSummaryFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Valu
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ActionSummaryMutation", m)
+}
+
+// The ActionVersionFunc type is an adapter to allow the use of ordinary
+// function as ActionVersion mutator.
+type ActionVersionFunc func(context.Context, *ent.ActionVersionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ActionVersionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ActionVersionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ActionVersionMutation", m)
 }
 
 // The ArtifactMetricsFunc type is an adapter to allow the use of ordinary
@@ -259,6 +295,18 @@ func (f EventMetadataFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Valu
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.EventMetadataMutation", m)
+}
+
+// The ExecLogSummaryFunc type is an adapter to allow the use of ordinary
+// function as ExecLogSummary mutator.
+type ExecLogSummaryFunc func(context.Context, *ent.ExecLogSummaryMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ExecLogSummaryFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ExecLogSummaryMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ExecLogSummaryMutation", m)
 }
 
 // The FileFunc type is an adapter to allow the use of ordinary

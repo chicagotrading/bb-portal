@@ -20,8 +20,14 @@ type Tx struct {
 	ActionCacheStatistics *ActionCacheStatisticsClient
 	// ActionData is the client for interacting with the ActionData builders.
 	ActionData *ActionDataClient
+	// ActionExecution is the client for interacting with the ActionExecution builders.
+	ActionExecution *ActionExecutionClient
+	// ActionKey is the client for interacting with the ActionKey builders.
+	ActionKey *ActionKeyClient
 	// ActionSummary is the client for interacting with the ActionSummary builders.
 	ActionSummary *ActionSummaryClient
+	// ActionVersion is the client for interacting with the ActionVersion builders.
+	ActionVersion *ActionVersionClient
 	// ArtifactMetrics is the client for interacting with the ArtifactMetrics builders.
 	ArtifactMetrics *ArtifactMetricsClient
 	// AuthenticatedUser is the client for interacting with the AuthenticatedUser builders.
@@ -56,6 +62,8 @@ type Tx struct {
 	DynamicExecutionRaceStatistic *DynamicExecutionRaceStatisticClient
 	// EventMetadata is the client for interacting with the EventMetadata builders.
 	EventMetadata *EventMetadataClient
+	// ExecLogSummary is the client for interacting with the ExecLogSummary builders.
+	ExecLogSummary *ExecLogSummaryClient
 	// File is the client for interacting with the File builders.
 	File *FileClient
 	// FilePath is the client for interacting with the FilePath builders.
@@ -248,7 +256,10 @@ func (tx *Tx) init() {
 	tx.Action = NewActionClient(tx.config)
 	tx.ActionCacheStatistics = NewActionCacheStatisticsClient(tx.config)
 	tx.ActionData = NewActionDataClient(tx.config)
+	tx.ActionExecution = NewActionExecutionClient(tx.config)
+	tx.ActionKey = NewActionKeyClient(tx.config)
 	tx.ActionSummary = NewActionSummaryClient(tx.config)
+	tx.ActionVersion = NewActionVersionClient(tx.config)
 	tx.ArtifactMetrics = NewArtifactMetricsClient(tx.config)
 	tx.AuthenticatedUser = NewAuthenticatedUserClient(tx.config)
 	tx.BazelInvocation = NewBazelInvocationClient(tx.config)
@@ -266,6 +277,7 @@ func (tx *Tx) init() {
 	tx.DynamicExecutionMetrics = NewDynamicExecutionMetricsClient(tx.config)
 	tx.DynamicExecutionRaceStatistic = NewDynamicExecutionRaceStatisticClient(tx.config)
 	tx.EventMetadata = NewEventMetadataClient(tx.config)
+	tx.ExecLogSummary = NewExecLogSummaryClient(tx.config)
 	tx.File = NewFileClient(tx.config)
 	tx.FilePath = NewFilePathClient(tx.config)
 	tx.GarbageMetrics = NewGarbageMetricsClient(tx.config)

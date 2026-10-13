@@ -1,0 +1,33 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "execlog",
+    srcs = [
+        "groups.go",
+        "parse.go",
+    ],
+    importpath = "github.com/buildbarn/bb-portal/pkg/execlog",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//pkg/proto/bazelbuild/bazel/protobuf:src_main_protobuf",
+        "@com_github_klauspost_compress//zstd",
+        "@org_golang_google_protobuf//encoding/protodelim",
+        "@org_golang_google_protobuf//types/known/durationpb",
+    ],
+)
+
+go_test(
+    name = "execlog_test",
+    srcs = [
+        "fixture_test.go",
+        "parse_test.go",
+    ],
+    deps = [
+        ":execlog",
+        "//pkg/execlog/execlogtest",
+        "//pkg/proto/bazelbuild/bazel/protobuf:src_main_protobuf",
+        "@com_github_stretchr_testify//require",
+        "@org_golang_google_protobuf//types/known/durationpb",
+        "@org_golang_google_protobuf//types/known/timestamppb",
+    ],
+)

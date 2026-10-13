@@ -46,6 +46,8 @@ func (BazelInvocation) Fields() []ent.Field {
 
 		field.Int64("profile_id").Optional().Annotations(entgql.Skip()),
 
+		field.Int64("exec_log_id").Optional().Annotations(entgql.Skip()),
+
 		field.String("bazel_version").Optional(),
 
 		field.String("exit_code_name").Optional(),
@@ -154,6 +156,25 @@ func (BazelInvocation) Edges() []ent.Edge {
 			Field("profile_id").
 			Unique(),
 
+		// The compact execution log of the invocation
+		edge.To("exec_log", File.Type).
+			Field("exec_log_id").
+			Unique().
+			Annotations(entgql.Skip()),
+
+		edge.To("exec_log_summary", ExecLogSummary.Type).
+			Unique().
+			Annotations(
+				entgql.Skip(),
+				entsql.OnDelete(entsql.Cascade),
+			),
+
+		edge.To("action_executions", ActionExecution.Type).
+			Annotations(
+				entgql.Skip(),
+				entsql.OnDelete(entsql.Cascade),
+			),
+
 		// Target Data for the completed Invocation
 		edge.To("invocation_targets", InvocationTarget.Type).
 			Annotations(
@@ -183,6 +204,7 @@ func (BazelInvocation) Indexes() []ent.Index {
 		index.Edges("instance_name"),
 		index.Edges("authenticated_user"),
 		index.Edges("profile"),
+		index.Edges("exec_log"),
 	}
 }
 

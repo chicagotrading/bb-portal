@@ -100,6 +100,21 @@ func (_c *FileCreate) AddInvocationProfile(v ...*BazelInvocation) *FileCreate {
 	return _c.AddInvocationProfileIDs(ids...)
 }
 
+// AddInvocationExecLogIDs adds the "invocation_exec_log" edge to the BazelInvocation entity by IDs.
+func (_c *FileCreate) AddInvocationExecLogIDs(ids ...int64) *FileCreate {
+	_c.mutation.AddInvocationExecLogIDs(ids...)
+	return _c
+}
+
+// AddInvocationExecLog adds the "invocation_exec_log" edges to the BazelInvocation entity.
+func (_c *FileCreate) AddInvocationExecLog(v ...*BazelInvocation) *FileCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddInvocationExecLogIDs(ids...)
+}
+
 // AddTestActionOutputIDs adds the "test_action_output" edge to the TestResult entity by IDs.
 func (_c *FileCreate) AddTestActionOutputIDs(ids ...int64) *FileCreate {
 	_c.mutation.AddTestActionOutputIDs(ids...)
@@ -281,6 +296,22 @@ func (_c *FileCreate) createSpec() (*File, *sqlgraph.CreateSpec) {
 			Inverse: true,
 			Table:   file.InvocationProfileTable,
 			Columns: []string{file.InvocationProfileColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(bazelinvocation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.InvocationExecLogIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   file.InvocationExecLogTable,
+			Columns: []string{file.InvocationExecLogColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(bazelinvocation.FieldID, field.TypeInt64),

@@ -6,9 +6,13 @@ import (
 
 	"entgo.io/ent/entql"
 	"github.com/buildbarn/bb-portal/ent/gen/ent"
+	"github.com/buildbarn/bb-portal/ent/gen/ent/actionexecution"
+	"github.com/buildbarn/bb-portal/ent/gen/ent/actionkey"
+	"github.com/buildbarn/bb-portal/ent/gen/ent/actionversion"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/authenticateduser"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/bazelinvocation"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/build"
+	"github.com/buildbarn/bb-portal/ent/gen/ent/execlogsummary"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/file"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/filepath"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/instancename"
@@ -41,6 +45,48 @@ func privacyFilterFunc(ctx context.Context, f privacy.Filter, filterFunc func(pr
 		filterFunc(f, authorizedInstanceNames),
 	)
 	return privacy.Skip
+}
+
+// Policy for ActionExecution.
+func (ActionExecution) Policy() ent.Policy {
+	return privacy.FilterFunc(func(ctx context.Context, f privacy.Filter) error {
+		return privacyFilterFunc(ctx, f, func(f privacy.Filter, authorizedInstanceNames []any) entql.P {
+			return entql.HasEdgeWith(
+				actionexecution.EdgeBazelInvocation,
+				entql.HasEdgeWith(
+					bazelinvocation.EdgeInstanceName,
+					entql.FieldIn(instancename.FieldName, authorizedInstanceNames...),
+				),
+			)
+		})
+	})
+}
+
+// Policy for ActionKey.
+func (ActionKey) Policy() ent.Policy {
+	return privacy.FilterFunc(func(ctx context.Context, f privacy.Filter) error {
+		return privacyFilterFunc(ctx, f, func(f privacy.Filter, authorizedInstanceNames []any) entql.P {
+			return entql.HasEdgeWith(
+				actionkey.EdgeInstanceName,
+				entql.FieldIn(instancename.FieldName, authorizedInstanceNames...),
+			)
+		})
+	})
+}
+
+// Policy for ActionVersion.
+func (ActionVersion) Policy() ent.Policy {
+	return privacy.FilterFunc(func(ctx context.Context, f privacy.Filter) error {
+		return privacyFilterFunc(ctx, f, func(f privacy.Filter, authorizedInstanceNames []any) entql.P {
+			return entql.HasEdgeWith(
+				actionversion.EdgeActionKey,
+				entql.HasEdgeWith(
+					actionkey.EdgeInstanceName,
+					entql.FieldIn(instancename.FieldName, authorizedInstanceNames...),
+				),
+			)
+		})
+	})
 }
 
 // Policy for AuthenticatedUser.
@@ -77,6 +123,21 @@ func (Build) Policy() ent.Policy {
 			return entql.HasEdgeWith(
 				build.EdgeInstanceName,
 				entql.FieldIn(instancename.FieldName, authorizedInstanceNames...),
+			)
+		})
+	})
+}
+
+// Policy for ExecLogSummary.
+func (ExecLogSummary) Policy() ent.Policy {
+	return privacy.FilterFunc(func(ctx context.Context, f privacy.Filter) error {
+		return privacyFilterFunc(ctx, f, func(f privacy.Filter, authorizedInstanceNames []any) entql.P {
+			return entql.HasEdgeWith(
+				execlogsummary.EdgeBazelInvocation,
+				entql.HasEdgeWith(
+					bazelinvocation.EdgeInstanceName,
+					entql.FieldIn(instancename.FieldName, authorizedInstanceNames...),
+				),
 			)
 		})
 	})

@@ -124,6 +124,13 @@ local adminAuthorizer = { allow: {} };
     readAuthorizer: readAuthorizer,
   },
 
+  execLogIngestServiceConfiguration: {
+    pollInterval: '30s',
+    versionRetention: '864000s',
+    maximumLogSizeBytes: 128 * 1024 * 1024,
+    maximumDecompressedLogSizeBytes: 2 * 1024 * 1024 * 1024,
+  },
+
   frontendServiceConfiguration: {
     frontendSource: {
       // NOTE: In production, you should use the `embedded` option instead of

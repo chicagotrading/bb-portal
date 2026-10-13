@@ -56,6 +56,10 @@ func (File) Edges() []ent.Edge {
 		edge.From("invocation_profile", BazelInvocation.Type).
 			Ref("profile"),
 
+		edge.From("invocation_exec_log", BazelInvocation.Type).
+			Ref("exec_log").
+			Annotations(entgql.Skip()),
+
 		edge.From("test_action_output", TestResult.Type).
 			Ref("test_action_output").
 			Through("test_action_output_table", TestActionOutput.Type),

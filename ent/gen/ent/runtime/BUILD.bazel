@@ -7,9 +7,13 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//ent/authschema",
+        "//ent/gen/ent/actionexecution",
+        "//ent/gen/ent/actionkey",
+        "//ent/gen/ent/actionversion",
         "//ent/gen/ent/authenticateduser",
         "//ent/gen/ent/bazelinvocation",
         "//ent/gen/ent/build",
+        "//ent/gen/ent/execlogsummary",
         "//ent/gen/ent/file",
         "//ent/gen/ent/filepath",
         "//ent/gen/ent/invocationtarget",

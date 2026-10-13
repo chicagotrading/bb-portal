@@ -9,6 +9,12 @@ type (
 	Action struct{ schema.Action }
 	// ActionCacheStatistics reexport with auth policy added
 	ActionCacheStatistics struct{ schema.ActionCacheStatistics }
+	// ActionExecution reexport with auth policy added
+	ActionExecution struct{ schema.ActionExecution }
+	// ActionKey reexport with auth policy added
+	ActionKey struct{ schema.ActionKey }
+	// ActionVersion reexport with auth policy added
+	ActionVersion struct{ schema.ActionVersion }
 	// ActionData reexport with auth policy added
 	ActionData struct{ schema.ActionData }
 	// ActionSummary reexport with auth policy added
@@ -53,6 +59,8 @@ type (
 	}
 	// EventMetadata reexport with auth policy added
 	EventMetadata struct{ schema.EventMetadata }
+	// ExecLogSummary reexport with auth policy added
+	ExecLogSummary struct{ schema.ExecLogSummary }
 	// File reexport with auth policy added
 	File struct{ schema.File }
 	// FilePath reexport with auth policy added

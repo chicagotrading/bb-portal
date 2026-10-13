@@ -6,9 +6,13 @@ import (
 	"context"
 
 	"github.com/buildbarn/bb-portal/ent/authschema"
+	"github.com/buildbarn/bb-portal/ent/gen/ent/actionexecution"
+	"github.com/buildbarn/bb-portal/ent/gen/ent/actionkey"
+	"github.com/buildbarn/bb-portal/ent/gen/ent/actionversion"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/authenticateduser"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/bazelinvocation"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/build"
+	"github.com/buildbarn/bb-portal/ent/gen/ent/execlogsummary"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/file"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/filepath"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/invocationtarget"
@@ -24,6 +28,71 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	actionexecution.Policy = privacy.NewPolicies(authschema.ActionExecution{})
+	actionexecution.Hooks[0] = func(next ent.Mutator) ent.Mutator {
+		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+			if err := actionexecution.Policy.EvalMutation(ctx, m); err != nil {
+				return nil, err
+			}
+			return next.Mutate(ctx, m)
+		})
+	}
+	actionexecutionFields := authschema.ActionExecution{}.Fields()
+	_ = actionexecutionFields
+	// actionexecutionDescExitCode is the schema descriptor for exit_code field.
+	actionexecutionDescExitCode := actionexecutionFields[4].Descriptor()
+	// actionexecution.DefaultExitCode holds the default value on creation for the exit_code field.
+	actionexecution.DefaultExitCode = actionexecutionDescExitCode.Default.(int32)
+	// actionexecutionDescTotalMs is the schema descriptor for total_ms field.
+	actionexecutionDescTotalMs := actionexecutionFields[5].Descriptor()
+	// actionexecution.DefaultTotalMs holds the default value on creation for the total_ms field.
+	actionexecution.DefaultTotalMs = actionexecutionDescTotalMs.Default.(int64)
+	// actionexecutionDescQueueMs is the schema descriptor for queue_ms field.
+	actionexecutionDescQueueMs := actionexecutionFields[6].Descriptor()
+	// actionexecution.DefaultQueueMs holds the default value on creation for the queue_ms field.
+	actionexecution.DefaultQueueMs = actionexecutionDescQueueMs.Default.(int64)
+	// actionexecutionDescExecWallMs is the schema descriptor for exec_wall_ms field.
+	actionexecutionDescExecWallMs := actionexecutionFields[7].Descriptor()
+	// actionexecution.DefaultExecWallMs holds the default value on creation for the exec_wall_ms field.
+	actionexecution.DefaultExecWallMs = actionexecutionDescExecWallMs.Default.(int64)
+	// actionexecutionDescFetchMs is the schema descriptor for fetch_ms field.
+	actionexecutionDescFetchMs := actionexecutionFields[8].Descriptor()
+	// actionexecution.DefaultFetchMs holds the default value on creation for the fetch_ms field.
+	actionexecution.DefaultFetchMs = actionexecutionDescFetchMs.Default.(int64)
+	// actionexecutionDescUploadMs is the schema descriptor for upload_ms field.
+	actionexecutionDescUploadMs := actionexecutionFields[9].Descriptor()
+	// actionexecution.DefaultUploadMs holds the default value on creation for the upload_ms field.
+	actionexecution.DefaultUploadMs = actionexecutionDescUploadMs.Default.(int64)
+	// actionexecutionDescInputBytes is the schema descriptor for input_bytes field.
+	actionexecutionDescInputBytes := actionexecutionFields[10].Descriptor()
+	// actionexecution.DefaultInputBytes holds the default value on creation for the input_bytes field.
+	actionexecution.DefaultInputBytes = actionexecutionDescInputBytes.Default.(int64)
+	// actionexecutionDescInputFiles is the schema descriptor for input_files field.
+	actionexecutionDescInputFiles := actionexecutionFields[11].Descriptor()
+	// actionexecution.DefaultInputFiles holds the default value on creation for the input_files field.
+	actionexecution.DefaultInputFiles = actionexecutionDescInputFiles.Default.(int64)
+	// actionexecutionDescMemoryPeakBytes is the schema descriptor for memory_peak_bytes field.
+	actionexecutionDescMemoryPeakBytes := actionexecutionFields[12].Descriptor()
+	// actionexecution.DefaultMemoryPeakBytes holds the default value on creation for the memory_peak_bytes field.
+	actionexecution.DefaultMemoryPeakBytes = actionexecutionDescMemoryPeakBytes.Default.(int64)
+	actionkey.Policy = privacy.NewPolicies(authschema.ActionKey{})
+	actionkey.Hooks[0] = func(next ent.Mutator) ent.Mutator {
+		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+			if err := actionkey.Policy.EvalMutation(ctx, m); err != nil {
+				return nil, err
+			}
+			return next.Mutate(ctx, m)
+		})
+	}
+	actionversion.Policy = privacy.NewPolicies(authschema.ActionVersion{})
+	actionversion.Hooks[0] = func(next ent.Mutator) ent.Mutator {
+		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+			if err := actionversion.Policy.EvalMutation(ctx, m); err != nil {
+				return nil, err
+			}
+			return next.Mutate(ctx, m)
+		})
+	}
 	authenticateduser.Policy = privacy.NewPolicies(authschema.AuthenticatedUser{})
 	authenticateduser.Hooks[0] = func(next ent.Mutator) ent.Mutator {
 		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
@@ -49,19 +118,19 @@ func init() {
 	// bazelinvocation.DefaultBepCompleted holds the default value on creation for the bep_completed field.
 	bazelinvocation.DefaultBepCompleted = bazelinvocationDescBepCompleted.Default.(bool)
 	// bazelinvocationDescProcessedEventStarted is the schema descriptor for processed_event_started field.
-	bazelinvocationDescProcessedEventStarted := bazelinvocationFields[16].Descriptor()
+	bazelinvocationDescProcessedEventStarted := bazelinvocationFields[17].Descriptor()
 	// bazelinvocation.DefaultProcessedEventStarted holds the default value on creation for the processed_event_started field.
 	bazelinvocation.DefaultProcessedEventStarted = bazelinvocationDescProcessedEventStarted.Default.(bool)
 	// bazelinvocationDescProcessedEventBuildMetadata is the schema descriptor for processed_event_build_metadata field.
-	bazelinvocationDescProcessedEventBuildMetadata := bazelinvocationFields[17].Descriptor()
+	bazelinvocationDescProcessedEventBuildMetadata := bazelinvocationFields[18].Descriptor()
 	// bazelinvocation.DefaultProcessedEventBuildMetadata holds the default value on creation for the processed_event_build_metadata field.
 	bazelinvocation.DefaultProcessedEventBuildMetadata = bazelinvocationDescProcessedEventBuildMetadata.Default.(bool)
 	// bazelinvocationDescProcessedEventBuildFinished is the schema descriptor for processed_event_build_finished field.
-	bazelinvocationDescProcessedEventBuildFinished := bazelinvocationFields[18].Descriptor()
+	bazelinvocationDescProcessedEventBuildFinished := bazelinvocationFields[19].Descriptor()
 	// bazelinvocation.DefaultProcessedEventBuildFinished holds the default value on creation for the processed_event_build_finished field.
 	bazelinvocation.DefaultProcessedEventBuildFinished = bazelinvocationDescProcessedEventBuildFinished.Default.(bool)
 	// bazelinvocationDescProcessedEventWorkspaceStatus is the schema descriptor for processed_event_workspace_status field.
-	bazelinvocationDescProcessedEventWorkspaceStatus := bazelinvocationFields[19].Descriptor()
+	bazelinvocationDescProcessedEventWorkspaceStatus := bazelinvocationFields[20].Descriptor()
 	// bazelinvocation.DefaultProcessedEventWorkspaceStatus holds the default value on creation for the processed_event_workspace_status field.
 	bazelinvocation.DefaultProcessedEventWorkspaceStatus = bazelinvocationDescProcessedEventWorkspaceStatus.Default.(bool)
 	build.Policy = privacy.NewPolicies(authschema.Build{})
@@ -73,6 +142,41 @@ func init() {
 			return next.Mutate(ctx, m)
 		})
 	}
+	execlogsummary.Policy = privacy.NewPolicies(authschema.ExecLogSummary{})
+	execlogsummary.Hooks[0] = func(next ent.Mutator) ent.Mutator {
+		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+			if err := execlogsummary.Policy.EvalMutation(ctx, m); err != nil {
+				return nil, err
+			}
+			return next.Mutate(ctx, m)
+		})
+	}
+	execlogsummaryFields := authschema.ExecLogSummary{}.Fields()
+	_ = execlogsummaryFields
+	// execlogsummaryDescAttempts is the schema descriptor for attempts field.
+	execlogsummaryDescAttempts := execlogsummaryFields[3].Descriptor()
+	// execlogsummary.DefaultAttempts holds the default value on creation for the attempts field.
+	execlogsummary.DefaultAttempts = execlogsummaryDescAttempts.Default.(int32)
+	// execlogsummaryDescSpawnCount is the schema descriptor for spawn_count field.
+	execlogsummaryDescSpawnCount := execlogsummaryFields[8].Descriptor()
+	// execlogsummary.DefaultSpawnCount holds the default value on creation for the spawn_count field.
+	execlogsummary.DefaultSpawnCount = execlogsummaryDescSpawnCount.Default.(int64)
+	// execlogsummaryDescCacheHits is the schema descriptor for cache_hits field.
+	execlogsummaryDescCacheHits := execlogsummaryFields[9].Descriptor()
+	// execlogsummary.DefaultCacheHits holds the default value on creation for the cache_hits field.
+	execlogsummary.DefaultCacheHits = execlogsummaryDescCacheHits.Default.(int64)
+	// execlogsummaryDescExecutedCount is the schema descriptor for executed_count field.
+	execlogsummaryDescExecutedCount := execlogsummaryFields[10].Descriptor()
+	// execlogsummary.DefaultExecutedCount holds the default value on creation for the executed_count field.
+	execlogsummary.DefaultExecutedCount = execlogsummaryDescExecutedCount.Default.(int64)
+	// execlogsummaryDescParseMs is the schema descriptor for parse_ms field.
+	execlogsummaryDescParseMs := execlogsummaryFields[11].Descriptor()
+	// execlogsummary.DefaultParseMs holds the default value on creation for the parse_ms field.
+	execlogsummary.DefaultParseMs = execlogsummaryDescParseMs.Default.(int64)
+	// execlogsummaryDescBytes is the schema descriptor for bytes field.
+	execlogsummaryDescBytes := execlogsummaryFields[12].Descriptor()
+	// execlogsummary.DefaultBytes holds the default value on creation for the bytes field.
+	execlogsummary.DefaultBytes = execlogsummaryDescBytes.Default.(int64)
 	file.Policy = privacy.NewPolicies(authschema.File{})
 	file.Hooks[0] = func(next ent.Mutator) ent.Mutator {
 		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
