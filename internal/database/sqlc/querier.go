@@ -9,6 +9,7 @@ import (
 )
 
 type Querier interface {
+	AggregateActionExecutions(ctx context.Context, arg AggregateActionExecutionsParams) ([]AggregateActionExecutionsRow, error)
 	ClaimExecLogSummary(ctx context.Context, arg ClaimExecLogSummaryParams) (ClaimExecLogSummaryRow, error)
 	//
 	// A function for creating authenticated
@@ -59,6 +60,7 @@ type Querier interface {
 	FindExecLogsToIngest(ctx context.Context, arg FindExecLogsToIngestParams) ([]FindExecLogsToIngestRow, error)
 	FindMappedTargets(ctx context.Context, arg FindMappedTargetsParams) ([]FindMappedTargetsRow, error)
 	FindTargets(ctx context.Context, arg FindTargetsParams) ([]FindTargetsRow, error)
+	GetActionExecutionTimes(ctx context.Context, arg GetActionExecutionTimesParams) ([]GetActionExecutionTimesRow, error)
 	GetActionKeyIDs(ctx context.Context, arg GetActionKeyIDsParams) ([]GetActionKeyIDsRow, error)
 	GetActionVersionIDs(ctx context.Context, arg GetActionVersionIDsParams) ([]GetActionVersionIDsRow, error)
 	GetInvocationsForLogCompactionFromPages(ctx context.Context, arg GetInvocationsForLogCompactionFromPagesParams) ([]GetInvocationsForLogCompactionFromPagesRow, error)
@@ -76,6 +78,7 @@ type Querier interface {
 	// Returns the number of physical blocks of a table
 	SelectPages(ctx context.Context, tableName string) (int32, error)
 	SelectRedundantIndexes(ctx context.Context) ([]SelectRedundantIndexesRow, error)
+	SumActionExecutionTime(ctx context.Context, bazelInvocationIds []int64) (int64, error)
 	TouchActionVersions(ctx context.Context, arg TouchActionVersionsParams) (int64, error)
 	UpdateBuildTimestampFromInvocation(ctx context.Context, invocationID int64) error
 	UpdateCompletedInvocationWithEndTimeFromEventMetadata(ctx context.Context) (int64, error)

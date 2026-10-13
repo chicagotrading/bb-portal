@@ -1,8 +1,9 @@
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "graphql",
     srcs = [
+        "action_insights.go",
         "custom.resolvers.go",
         "ent.resolvers.go",
         "resolver.go",
@@ -18,15 +19,24 @@ go_library(
     visibility = ["//:__subpackages__"],
     deps = [
         "//ent/gen/ent",
+        "//ent/gen/ent/actionexecution",
+        "//ent/gen/ent/actionkey",
+        "//ent/gen/ent/actionversion",
         "//ent/gen/ent/authenticateduser",
         "//ent/gen/ent/bazelinvocation",
         "//ent/gen/ent/build",
+        "//ent/gen/ent/execlogsummary",
         "//ent/gen/ent/invocationtarget",
         "//ent/gen/ent/predicate",
+        "//ent/gen/ent/sourcecontrol",
         "//ent/gen/ent/target",
         "//ent/gen/ent/testsummary",
+        "//internal/actioninsights",
         "//internal/database",
+        "//internal/database/sqlc",
         "//internal/graphql/helpers",
+        "//internal/graphql/model",
+        "//pkg/execlog",
         "//pkg/uuidgql",
         "@bazel_remote_apis//build/bazel/remote/execution/v2:remote_execution_go_proto",
         "@com_github_99designs_gqlgen//graphql",
@@ -43,5 +53,31 @@ go_library(
         "@io_entgo_ent//dialect/sql",
         "@io_entgo_ent//dialect/sql/sqljson",
         "@io_opentelemetry_go_otel_trace//:trace",
+        "@org_golang_google_grpc//codes",
+        "@org_golang_google_grpc//status",
+    ],
+)
+
+go_test(
+    name = "graphql_test",
+    srcs = ["action_insights_test.go"],
+    deps = [
+        ":graphql",
+        "//ent/gen/ent",
+        "//ent/gen/ent/execlogsummary",
+        "//ent/gen/ent/runtime",
+        "//internal/actioninsights",
+        "//internal/database/buildeventrecorder",
+        "//internal/database/dbauthservice",
+        "//internal/database/embedded",
+        "//internal/graphql/helpers",
+        "//pkg/invocation/files",
+        "//test/testutils",
+        "@com_github_99designs_gqlgen//graphql",
+        "@com_github_buildbarn_bb_storage//pkg/auth",
+        "@com_github_buildbarn_bb_storage//pkg/clock",
+        "@com_github_buildbarn_bb_storage//pkg/jmespath",
+        "@com_github_stretchr_testify//require",
+        "@io_opentelemetry_go_otel_trace//noop",
     ],
 )

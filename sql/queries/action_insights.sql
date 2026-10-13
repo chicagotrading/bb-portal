@@ -153,3 +153,36 @@ WHERE id IN (
         )
     LIMIT sqlc.arg(batch_limit)::bigint
 );
+
+-- name: AggregateActionExecutions :many
+SELECT
+    e.action_key_id,
+    count(*)::bigint AS executions,
+    count(DISTINCT e.bazel_invocation_id)::bigint AS invocations,
+    sum(e.total_ms)::bigint AS total_ms,
+    sum(e.exec_wall_ms)::bigint AS exec_wall_ms,
+    sum(e.queue_ms)::bigint AS queue_ms,
+    (percentile_disc(0.5) WITHIN GROUP (ORDER BY e.total_ms))::bigint AS p50_ms,
+    (percentile_disc(0.95) WITHIN GROUP (ORDER BY e.total_ms))::bigint AS p95_ms,
+    max(e.total_ms)::bigint AS max_ms
+FROM action_executions e
+WHERE e.bazel_invocation_id = ANY(sqlc.arg(bazel_invocation_ids)::bigint[])
+GROUP BY e.action_key_id
+ORDER BY total_ms DESC, e.action_key_id
+LIMIT sqlc.arg(row_limit)::bigint;
+
+-- name: SumActionExecutionTime :one
+SELECT coalesce(sum(e.total_ms), 0)::bigint AS total_ms
+FROM action_executions e
+WHERE e.bazel_invocation_id = ANY(sqlc.arg(bazel_invocation_ids)::bigint[]);
+
+-- name: GetActionExecutionTimes :many
+SELECT
+    e.bazel_invocation_id,
+    e.action_key_id,
+    sum(e.total_ms)::bigint AS total_ms
+FROM action_executions e
+WHERE
+    e.bazel_invocation_id = ANY(sqlc.arg(bazel_invocation_ids)::bigint[])
+    AND e.action_key_id = ANY(sqlc.arg(action_key_ids)::bigint[])
+GROUP BY e.bazel_invocation_id, e.action_key_id;

@@ -21,3 +21,13 @@ func TestSpawnIndexRoundTrip(t *testing.T) {
 	_, err = actioninsights.DecodeSpawnIndex([]byte{0x80})
 	require.Error(t, err)
 }
+
+func TestSpawnIndexVersion(t *testing.T) {
+	b := actioninsights.EncodeSpawnIndex([]actioninsights.Pair{{KeyID: 5, VersionID: 8}, {KeyID: 5, VersionID: 3}, {KeyID: 9, VersionID: 1}})
+	for key, want := range map[int64]int64{5: 3, 9: 1, 1: 0, 7: 0, 10: 0} {
+		v, ok, err := b.Version(key)
+		require.NoError(t, err)
+		require.Equal(t, want != 0, ok, key)
+		require.Equal(t, want, v, key)
+	}
+}

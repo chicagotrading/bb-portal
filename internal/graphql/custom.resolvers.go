@@ -20,6 +20,7 @@ import (
 	"github.com/buildbarn/bb-portal/ent/gen/ent/target"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/testsummary"
 	"github.com/buildbarn/bb-portal/internal/graphql/helpers"
+	"github.com/buildbarn/bb-portal/internal/graphql/model"
 	"github.com/buildbarn/bb-storage/pkg/util"
 	"github.com/google/uuid"
 )
@@ -104,6 +105,21 @@ func (r *queryResolver) GetTestSummary(ctx context.Context, invocationID uuid.UU
 		return nil, util.StatusWrap(err, "Failed to query fields")
 	}
 	return query.Only(ctx)
+}
+
+// ActionInsights is the resolver for the actionInsights field.
+func (r *queryResolver) ActionInsights(ctx context.Context, where *ent.BazelInvocationWhereInput, invocationLimit, rowLimit *int) (*model.ActionInsights, error) {
+	return r.actionInsights(ctx, where, invocationLimit, rowLimit)
+}
+
+// ActionHistory is the resolver for the actionHistory field.
+func (r *queryResolver) ActionHistory(ctx context.Context, keyID string, where *ent.BazelInvocationWhereInput, invocationLimit *int) ([]*model.ActionHistoryEntry, error) {
+	return r.actionHistory(ctx, keyID, where, invocationLimit)
+}
+
+// ActionInsightsFilterOptions is the resolver for the actionInsightsFilterOptions field.
+func (r *queryResolver) ActionInsightsFilterOptions(ctx context.Context, where *ent.BazelInvocationWhereInput) (*model.ActionInsightsFilterOptions, error) {
+	return r.actionInsightsFilterOptions(ctx, where)
 }
 
 // CommandIn is the resolver for the commandIn field.
