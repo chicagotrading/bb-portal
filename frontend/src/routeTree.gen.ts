@@ -17,6 +17,7 @@ import { Route as OperationsRouteImport } from './routes/operations'
 import { Route as BuildsRouteImport } from './routes/builds'
 import { Route as BrowserRouteImport } from './routes/browser'
 import { Route as BazelInvocationsRouteImport } from './routes/bazel-invocations'
+import { Route as ActionInsightsRouteImport } from './routes/action-insights'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TestsIndexRouteImport } from './routes/tests.index'
 import { Route as TargetsIndexRouteImport } from './routes/targets.index'
@@ -85,6 +86,11 @@ const BrowserRoute = BrowserRouteImport.update({
 const BazelInvocationsRoute = BazelInvocationsRouteImport.update({
   id: '/bazel-invocations',
   path: '/bazel-invocations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ActionInsightsRoute = ActionInsightsRouteImport.update({
+  id: '/action-insights',
+  path: '/action-insights',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -247,6 +253,7 @@ const BazelInvocationsInvocationIDTestsTestSummaryIDRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/action-insights': typeof ActionInsightsRoute
   '/bazel-invocations': typeof BazelInvocationsRouteWithChildren
   '/browser': typeof BrowserRouteWithChildren
   '/builds': typeof BuildsRouteWithChildren
@@ -286,6 +293,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/action-insights': typeof ActionInsightsRoute
   '/trends': typeof TrendsRoute
   '/browser/$': typeof BrowserSplatRoute
   '/builds/$buildUUID': typeof BuildsBuildUUIDRoute
@@ -317,6 +325,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/action-insights': typeof ActionInsightsRoute
   '/bazel-invocations': typeof BazelInvocationsRouteWithChildren
   '/browser': typeof BrowserRouteWithChildren
   '/builds': typeof BuildsRouteWithChildren
@@ -358,6 +367,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/action-insights'
     | '/bazel-invocations'
     | '/browser'
     | '/builds'
@@ -397,6 +407,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/action-insights'
     | '/trends'
     | '/browser/$'
     | '/builds/$buildUUID'
@@ -427,6 +438,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/action-insights'
     | '/bazel-invocations'
     | '/browser'
     | '/builds'
@@ -467,6 +479,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ActionInsightsRoute: typeof ActionInsightsRoute
   BazelInvocationsRoute: typeof BazelInvocationsRouteWithChildren
   BrowserRoute: typeof BrowserRouteWithChildren
   BuildsRoute: typeof BuildsRouteWithChildren
@@ -534,6 +547,13 @@ declare module '@tanstack/react-router' {
       path: '/bazel-invocations'
       fullPath: '/bazel-invocations'
       preLoaderRoute: typeof BazelInvocationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/action-insights': {
+      id: '/action-insights'
+      path: '/action-insights'
+      fullPath: '/action-insights'
+      preLoaderRoute: typeof ActionInsightsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -897,6 +917,7 @@ const TestsRouteWithChildren = TestsRoute._addFileChildren(TestsRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ActionInsightsRoute: ActionInsightsRoute,
   BazelInvocationsRoute: BazelInvocationsRouteWithChildren,
   BrowserRoute: BrowserRouteWithChildren,
   BuildsRoute: BuildsRouteWithChildren,

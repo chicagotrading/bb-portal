@@ -17,6 +17,7 @@ go_test(
         "//internal/database/dbauthservice",
         "//internal/database/embedded",
         "//internal/graphql",
+        "//internal/graphql/helpers",
         "//pkg/authmetadataextraction",
         "//pkg/proto/configuration/bb_portal",
         "//pkg/testkit",

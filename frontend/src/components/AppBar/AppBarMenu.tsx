@@ -27,6 +27,11 @@ const MENU_ITEMS: PortalMenuItem[] = [
     requiredFeatures: [env.featureFlags?.bes?.pageTrends],
   },
   {
+    key: "/action-insights",
+    label: <Link to="/action-insights">Action Insights</Link>,
+    requiredFeatures: [env.featureFlags?.bes?.pageTrends],
+  },
+  {
     key: "/tests",
     label: <Link to="/tests">Tests</Link>,
     requiredFeatures: [env.featureFlags?.bes?.pageTests],

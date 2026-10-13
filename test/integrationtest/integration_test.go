@@ -11,6 +11,7 @@ import (
 	// Needed to avoid cyclic dependencies in ent (https://entgo.io/docs/privacy#privacy-policy-registration)
 	_ "github.com/buildbarn/bb-portal/ent/gen/ent/runtime"
 	databasecommon "github.com/buildbarn/bb-portal/internal/database/common"
+	"github.com/buildbarn/bb-portal/internal/graphql/helpers"
 	"github.com/buildbarn/bb-portal/pkg/authmetadataextraction"
 	"github.com/buildbarn/bb-portal/pkg/proto/configuration/bb_portal"
 	"github.com/buildbarn/bb-portal/pkg/testkit"
@@ -753,6 +754,39 @@ var (
 							"where": map[string]interface{}{
 								"commandIn": []string{"test"},
 							},
+						},
+					},
+				},
+				// No BEP file publishes an execution log, so nothing is
+				// analyzed and every invocation counts as without a log.
+				"ActionInsights": {
+					"without execution logs": {
+						variables: testkit.Variables{
+							"invocationLimit": 100,
+							"rowLimit":        500,
+						},
+					},
+					"test commands": {
+						variables: testkit.Variables{
+							"where": map[string]interface{}{
+								"commandIn": []string{"test"},
+							},
+						},
+					},
+				},
+				"ActionInsightsFilterOptions": {
+					"without execution logs": {
+						variables: testkit.Variables{
+							"where": map[string]interface{}{
+								"startedAtNotNil": true,
+							},
+						},
+					},
+				},
+				"ActionHistory": {
+					"unknown action": {
+						variables: testkit.Variables{
+							"keyId": helpers.GraphQLIDFromTypeAndID("ActionKey", 1),
 						},
 					},
 				},

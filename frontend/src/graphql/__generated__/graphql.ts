@@ -146,6 +146,56 @@ export type ActionCacheStatisticsWhereInput = {
   sizeInBytesNotNil?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
+/**
+ * What changed an action: its own command or inputs, inputs owned by other
+ * targets, both, or nothing the input fingerprints show.
+ */
+export enum ActionChangeCause {
+  Both = 'BOTH',
+  Dependency = 'DEPENDENCY',
+  Direct = 'DIRECT',
+  Unknown = 'UNKNOWN'
+}
+
+export type ActionChurn = {
+  __typename?: 'ActionChurn';
+  both: Scalars['Int']['output'];
+  changes: Scalars['Int']['output'];
+  dependency: Scalars['Int']['output'];
+  direct: Scalars['Int']['output'];
+  /** Changes after which the action was executed rather than a cache hit. */
+  executedAfterChange: Scalars['Int']['output'];
+  keyId: Scalars['ID']['output'];
+  mnemonic: Scalars['String']['output'];
+  /**
+   * Changes to a version not seen earlier in the analyzed invocations.
+   * Returning to a known version, as when builds of two branches alternate,
+   * is a change but not a new version.
+   */
+  newVersions: Scalars['Int']['output'];
+  primaryOutput: Scalars['String']['output'];
+  targetLabel: Scalars['String']['output'];
+  /** Executed time of the action in the invocations where it changed. */
+  timeMs: Scalars['Int']['output'];
+  /** The input groups that changed most often, at most five. */
+  topCauses: Array<ActionInputGroupCount>;
+  unknown: Scalars['Int']['output'];
+};
+
+export type ActionChurnCause = {
+  __typename?: 'ActionChurnCause';
+  /** Distinct actions under which the group changed. */
+  actionsAffected: Scalars['Int']['output'];
+  /** Times the group changed under some action. */
+  changes: Scalars['Int']['output'];
+  kind: ActionInputGroupKind;
+  name: Scalars['String']['output'];
+  /** Those changes that gave the action a new version. */
+  newVersions: Scalars['Int']['output'];
+  /** Executed time of those actions in the invocations where it changed. */
+  timeMs: Scalars['Int']['output'];
+};
+
 export type ActionData = Node & {
   __typename?: 'ActionData';
   actionSummary?: Maybe<ActionSummary>;
@@ -261,6 +311,162 @@ export type ActionDataWhereInput = {
   userTimeNEQ?: InputMaybe<Scalars['Int']['input']>;
   userTimeNotIn?: InputMaybe<Array<Scalars['Int']['input']>>;
   userTimeNotNil?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type ActionDigest = {
+  __typename?: 'ActionDigest';
+  hash: Scalars['String']['output'];
+  /**
+   * 0 for spawns without an action digest, such as local executions without
+   * a remote cache. Their hash is computed from the inputs and names no
+   * action in the CAS.
+   */
+  sizeBytes: Scalars['Int']['output'];
+};
+
+export type ActionExecutionMetrics = {
+  __typename?: 'ActionExecutionMetrics';
+  execWallMs: Scalars['Int']['output'];
+  exitCode: Scalars['Int']['output'];
+  fetchMs: Scalars['Int']['output'];
+  inputBytes: Scalars['Int']['output'];
+  inputFiles: Scalars['Int']['output'];
+  memoryPeakBytes: Scalars['Int']['output'];
+  queueMs: Scalars['Int']['output'];
+  runner: Scalars['String']['output'];
+  /** Start relative to the first spawn of the invocation. */
+  startOffsetMs?: Maybe<Scalars['Int']['output']>;
+  totalMs: Scalars['Int']['output'];
+  uploadMs: Scalars['Int']['output'];
+};
+
+export type ActionHistoryEntry = {
+  __typename?: 'ActionHistoryEntry';
+  /** Set when changed. */
+  cause?: Maybe<ActionChangeCause>;
+  changed: Scalars['Boolean']['output'];
+  changedGroups: Array<Scalars['String']['output']>;
+  digest: ActionDigest;
+  /** Digest function of the digests, e.g. sha256. */
+  digestFunction: Scalars['String']['output'];
+  /** Total time of those executions. */
+  executedMs: Scalars['Int']['output'];
+  /** The longest execution in the invocation; null when it was a cache hit. */
+  execution?: Maybe<ActionExecutionMetrics>;
+  /** Executions in the invocation, e.g. several with --flaky_test_attempts. */
+  executions: Scalars['Int']['output'];
+  /** REv2 instance name of the digests. */
+  instanceName: Scalars['String']['output'];
+  invocationId: Scalars['UUID']['output'];
+  /** Changed to a version not seen in an earlier analyzed invocation. */
+  newVersion: Scalars['Boolean']['output'];
+  /** The digest in the previous analyzed invocation that ran the action. */
+  previousDigest?: Maybe<ActionDigest>;
+  startedAt?: Maybe<Scalars['Time']['output']>;
+};
+
+export type ActionImpact = {
+  __typename?: 'ActionImpact';
+  execWallMs: Scalars['Int']['output'];
+  executions: Scalars['Int']['output'];
+  /** Invocations in which the action was executed. */
+  invocations: Scalars['Int']['output'];
+  /** Pass to actionHistory. */
+  keyId: Scalars['ID']['output'];
+  maxMs: Scalars['Int']['output'];
+  mnemonic: Scalars['String']['output'];
+  p50Ms: Scalars['Int']['output'];
+  p95Ms: Scalars['Int']['output'];
+  /** Path of the first output, including its bazel-out/<config> prefix. */
+  primaryOutput: Scalars['String']['output'];
+  queueMs: Scalars['Int']['output'];
+  /** totalMs over executedTimeMs, between 0 and 1. */
+  share: Scalars['Float']['output'];
+  targetLabel: Scalars['String']['output'];
+  totalMs: Scalars['Int']['output'];
+};
+
+export type ActionInputGroupCount = {
+  __typename?: 'ActionInputGroupCount';
+  count: Scalars['Int']['output'];
+  kind: ActionInputGroupKind;
+  name: Scalars['String']['output'];
+};
+
+/**
+ * Owner of an input group. SOURCE is workspace sources and files Bazel
+ * writes for the target itself, like its module map ("src:<path>" for the
+ * target's own package, "//<dir> (sources)" elsewhere). GENERATED is outputs
+ * of spawns, named by package and configuration ("//<package> (<config>)",
+ * "//<package>:<test> (<config>)" for test logs, "bazel-out:<path>"
+ * otherwise). EXTERNAL is an external repository ("@<repo>"). COMMAND is the
+ * arguments, environment, platform and param files ("cmd").
+ */
+export enum ActionInputGroupKind {
+  Command = 'COMMAND',
+  External = 'EXTERNAL',
+  Generated = 'GENERATED',
+  Source = 'SOURCE'
+}
+
+export type ActionInsights = {
+  __typename?: 'ActionInsights';
+  /** Input groups by new versions, then changes, descending. */
+  causes: Array<ActionChurnCause>;
+  /** Changes whose cause was classified, for the causes list. */
+  changesExplained: Scalars['Int']['output'];
+  /** Changes over all actions. */
+  changesTotal: Scalars['Int']['output'];
+  /** Actions by new versions, then changes, descending. */
+  churn: Array<ActionChurn>;
+  /** Spawns that were executed rather than served from a cache. */
+  executedSpawns: Scalars['Int']['output'];
+  executedTimeMs: Scalars['Int']['output'];
+  /** Actions by executed time, descending. */
+  impact: Array<ActionImpact>;
+  /** Matched invocations with an ingested execution log, at most invocationLimit. */
+  invocationsAnalyzed: Scalars['Int']['output'];
+  /** Matched invocations whose execution log failed to ingest. */
+  invocationsFailed: Scalars['Int']['output'];
+  /**
+   * Invocations matched by the filter that started no earlier than the
+   * oldest analyzed one, or all matched if none is analyzed. The counts below
+   * split them up.
+   */
+  invocationsMatched: Scalars['Int']['output'];
+  /** Matched invocations whose execution log is not ingested yet. */
+  invocationsPending: Scalars['Int']['output'];
+  /** Matched invocations that published no execution log. */
+  invocationsWithoutLog: Scalars['Int']['output'];
+  /** Distinct source control refs of the analyzed invocations, per repo. */
+  refsAnalyzed: Scalars['Int']['output'];
+  spawnsAnalyzed: Scalars['Int']['output'];
+};
+
+export type ActionInsightsFilterOption = {
+  __typename?: 'ActionInsightsFilterOption';
+  /** Analyzed invocations with this value. */
+  invocations: Scalars['Int']['output'];
+  value: Scalars['String']['output'];
+};
+
+export type ActionInsightsFilterOptions = {
+  __typename?: 'ActionInsightsFilterOptions';
+  /** Source control refs and the repo they belong to. */
+  refs: Array<ActionInsightsRefOption>;
+  /** Source control repos. */
+  repos: Array<ActionInsightsFilterOption>;
+  /** Usernames of the invocations. */
+  users: Array<ActionInsightsFilterOption>;
+};
+
+export type ActionInsightsRefOption = {
+  __typename?: 'ActionInsightsRefOption';
+  /** Analyzed invocations with this repo and ref. */
+  invocations: Scalars['Int']['output'];
+  ref: Scalars['String']['output'];
+  /** Null when the source control has a ref but no repo. */
+  repo?: Maybe<Scalars['String']['output']>;
 };
 
 export type ActionSummary = Node & {
@@ -2784,6 +2990,26 @@ export type PageInfo = {
 
 export type Query = {
   __typename?: 'Query';
+  /**
+   * The versions and executions of one action over the invocations
+   * actionInsights analyzes for the same arguments, oldest first. Only
+   * invocations that ran the action are returned.
+   */
+  actionHistory: Array<ActionHistoryEntry>;
+  /**
+   * Action impact and churn over the newest `invocationLimit` invocations
+   * matching `where` whose compact execution log
+   * (--execution_log_compact_file) has been ingested. They are compared in
+   * started_at order.
+   */
+  actionInsights: ActionInsights;
+  /**
+   * Values to filter actionInsights by, taken from the invocations matching
+   * `where` whose execution log has been ingested. Each list is ordered by
+   * invocation count, highest first, and holds at most 200 values (refs: per
+   * repo).
+   */
+  actionInsightsFilterOptions: ActionInsightsFilterOptions;
   findBazelInvocations: BazelInvocationConnection;
   findBuilds: BuildConnection;
   findTargets: TargetConnection;
@@ -2797,6 +3023,25 @@ export type Query = {
   node?: Maybe<Node>;
   /** Lookup nodes by a list of IDs. */
   nodes: Array<Maybe<Node>>;
+};
+
+
+export type QueryActionHistoryArgs = {
+  invocationLimit?: InputMaybe<Scalars['Int']['input']>;
+  keyId: Scalars['ID']['input'];
+  where?: InputMaybe<BazelInvocationWhereInput>;
+};
+
+
+export type QueryActionInsightsArgs = {
+  invocationLimit?: InputMaybe<Scalars['Int']['input']>;
+  rowLimit?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<BazelInvocationWhereInput>;
+};
+
+
+export type QueryActionInsightsFilterOptionsArgs = {
+  where?: InputMaybe<BazelInvocationWhereInput>;
 };
 
 
@@ -4352,6 +4597,31 @@ export type GetTestsForTargetQueryVariables = Exact<{
 
 export type GetTestsForTargetQuery = { __typename?: 'Query', findTestSummaries: { __typename?: 'TestSummaryConnection', pageInfo: { __typename?: 'PageInfo', startCursor?: any | null, endCursor?: any | null, hasNextPage: boolean, hasPreviousPage: boolean }, edges?: Array<{ __typename?: 'TestSummaryEdge', node?: { __typename?: 'TestSummary', id: string, overallStatus?: string | null, invocationTarget: { __typename?: 'InvocationTarget', bazelInvocation: { __typename?: 'BazelInvocation', invocationID: any } } } | null } | null> | null } };
 
+export type ActionInsightsQueryVariables = Exact<{
+  where?: InputMaybe<BazelInvocationWhereInput>;
+  invocationLimit?: InputMaybe<Scalars['Int']['input']>;
+  rowLimit?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type ActionInsightsQuery = { __typename?: 'Query', actionInsights: { __typename?: 'ActionInsights', invocationsMatched: number, invocationsAnalyzed: number, invocationsPending: number, invocationsFailed: number, invocationsWithoutLog: number, refsAnalyzed: number, spawnsAnalyzed: number, executedSpawns: number, executedTimeMs: number, changesTotal: number, changesExplained: number, impact: Array<{ __typename?: 'ActionImpact', keyId: string, targetLabel: string, mnemonic: string, primaryOutput: string, executions: number, invocations: number, totalMs: number, execWallMs: number, queueMs: number, p50Ms: number, p95Ms: number, maxMs: number, share: number }>, churn: Array<{ __typename?: 'ActionChurn', keyId: string, targetLabel: string, mnemonic: string, primaryOutput: string, changes: number, newVersions: number, direct: number, dependency: number, both: number, unknown: number, executedAfterChange: number, timeMs: number, topCauses: Array<{ __typename?: 'ActionInputGroupCount', name: string, kind: ActionInputGroupKind, count: number }> }>, causes: Array<{ __typename?: 'ActionChurnCause', name: string, kind: ActionInputGroupKind, changes: number, newVersions: number, actionsAffected: number, timeMs: number }> } };
+
+export type ActionHistoryQueryVariables = Exact<{
+  keyId: Scalars['ID']['input'];
+  where?: InputMaybe<BazelInvocationWhereInput>;
+  invocationLimit?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type ActionHistoryQuery = { __typename?: 'Query', actionHistory: Array<{ __typename?: 'ActionHistoryEntry', invocationId: any, startedAt?: any | null, instanceName: string, digestFunction: string, changed: boolean, newVersion: boolean, cause?: ActionChangeCause | null, changedGroups: Array<string>, executions: number, executedMs: number, digest: { __typename?: 'ActionDigest', hash: string, sizeBytes: number }, previousDigest?: { __typename?: 'ActionDigest', hash: string, sizeBytes: number } | null, execution?: { __typename?: 'ActionExecutionMetrics', runner: string, exitCode: number, totalMs: number, queueMs: number, execWallMs: number, fetchMs: number, uploadMs: number, inputBytes: number, inputFiles: number, memoryPeakBytes: number } | null }> };
+
+export type ActionInsightsFilterOptionsQueryVariables = Exact<{
+  where?: InputMaybe<BazelInvocationWhereInput>;
+}>;
+
+
+export type ActionInsightsFilterOptionsQuery = { __typename?: 'Query', actionInsightsFilterOptions: { __typename?: 'ActionInsightsFilterOptions', repos: Array<{ __typename?: 'ActionInsightsFilterOption', value: string, invocations: number }>, refs: Array<{ __typename?: 'ActionInsightsRefOption', repo?: string | null, ref: string, invocations: number }>, users: Array<{ __typename?: 'ActionInsightsFilterOption', value: string, invocations: number }> } };
+
 export type FindBuildTimesQueryVariables = Exact<{
   first: Scalars['Int']['input'];
   where?: InputMaybe<BazelInvocationWhereInput>;
@@ -4795,6 +5065,9 @@ export const AuthenticatedUserNodeFragmentFragmentDoc = {"kind":"Document","defi
 export const CheckIfInvocationExistsDocument = {"__meta__":{"hash":"ca52316963621a0cc875c82e1e2edcd500389987"},"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"CheckIfInvocationExists"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"invocationID"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UUID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"getBazelInvocation"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"invocationID"},"value":{"kind":"Variable","name":{"kind":"Name","value":"invocationID"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]} as unknown as DocumentNode<CheckIfInvocationExistsQuery, CheckIfInvocationExistsQueryVariables>;
 export const GetInvocationTargetsForTargetDocument = {"__meta__":{"hash":"831e739e9379b3c3c57537e735120c1337524dc1"},"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetInvocationTargetsForTarget"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"targetId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"after"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Cursor"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"first"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"before"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Cursor"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"last"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"where"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"InvocationTargetWhereInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"getTarget"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"targetId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"invocationTargets"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"after"},"value":{"kind":"Variable","name":{"kind":"Name","value":"after"}}},{"kind":"Argument","name":{"kind":"Name","value":"first"},"value":{"kind":"Variable","name":{"kind":"Name","value":"first"}}},{"kind":"Argument","name":{"kind":"Name","value":"before"},"value":{"kind":"Variable","name":{"kind":"Name","value":"before"}}},{"kind":"Argument","name":{"kind":"Name","value":"last"},"value":{"kind":"Variable","name":{"kind":"Name","value":"last"}}},{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"Variable","name":{"kind":"Name","value":"where"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"edges"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"node"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"bazelInvocation"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"invocationID"}}]}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<GetInvocationTargetsForTargetQuery, GetInvocationTargetsForTargetQueryVariables>;
 export const GetTestsForTargetDocument = {"__meta__":{"hash":"6c1e39a0efc1fff3d86e44fa051126bd9dce1b6e"},"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetTestsForTarget"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"after"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Cursor"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"first"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"before"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Cursor"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"last"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"orderBy"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"TestSummaryOrder"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"where"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"TestSummaryWhereInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"findTestSummaries"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"after"},"value":{"kind":"Variable","name":{"kind":"Name","value":"after"}}},{"kind":"Argument","name":{"kind":"Name","value":"first"},"value":{"kind":"Variable","name":{"kind":"Name","value":"first"}}},{"kind":"Argument","name":{"kind":"Name","value":"before"},"value":{"kind":"Variable","name":{"kind":"Name","value":"before"}}},{"kind":"Argument","name":{"kind":"Name","value":"last"},"value":{"kind":"Variable","name":{"kind":"Name","value":"last"}}},{"kind":"Argument","name":{"kind":"Name","value":"orderBy"},"value":{"kind":"Variable","name":{"kind":"Name","value":"orderBy"}}},{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"Variable","name":{"kind":"Name","value":"where"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"pageInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"startCursor"}},{"kind":"Field","name":{"kind":"Name","value":"endCursor"}},{"kind":"Field","name":{"kind":"Name","value":"hasNextPage"}},{"kind":"Field","name":{"kind":"Name","value":"hasPreviousPage"}}]}},{"kind":"Field","name":{"kind":"Name","value":"edges"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"node"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"overallStatus"}},{"kind":"Field","name":{"kind":"Name","value":"invocationTarget"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"bazelInvocation"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"invocationID"}}]}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<GetTestsForTargetQuery, GetTestsForTargetQueryVariables>;
+export const ActionInsightsDocument = {"__meta__":{"hash":"61b26de0b89b6ed12fb11825d8ad9345680d9d0f"},"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ActionInsights"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"where"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"BazelInvocationWhereInput"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"invocationLimit"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"rowLimit"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"actionInsights"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"Variable","name":{"kind":"Name","value":"where"}}},{"kind":"Argument","name":{"kind":"Name","value":"invocationLimit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"invocationLimit"}}},{"kind":"Argument","name":{"kind":"Name","value":"rowLimit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"rowLimit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"invocationsMatched"}},{"kind":"Field","name":{"kind":"Name","value":"invocationsAnalyzed"}},{"kind":"Field","name":{"kind":"Name","value":"invocationsPending"}},{"kind":"Field","name":{"kind":"Name","value":"invocationsFailed"}},{"kind":"Field","name":{"kind":"Name","value":"invocationsWithoutLog"}},{"kind":"Field","name":{"kind":"Name","value":"refsAnalyzed"}},{"kind":"Field","name":{"kind":"Name","value":"spawnsAnalyzed"}},{"kind":"Field","name":{"kind":"Name","value":"executedSpawns"}},{"kind":"Field","name":{"kind":"Name","value":"executedTimeMs"}},{"kind":"Field","name":{"kind":"Name","value":"changesTotal"}},{"kind":"Field","name":{"kind":"Name","value":"changesExplained"}},{"kind":"Field","name":{"kind":"Name","value":"impact"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"keyId"}},{"kind":"Field","name":{"kind":"Name","value":"targetLabel"}},{"kind":"Field","name":{"kind":"Name","value":"mnemonic"}},{"kind":"Field","name":{"kind":"Name","value":"primaryOutput"}},{"kind":"Field","name":{"kind":"Name","value":"executions"}},{"kind":"Field","name":{"kind":"Name","value":"invocations"}},{"kind":"Field","name":{"kind":"Name","value":"totalMs"}},{"kind":"Field","name":{"kind":"Name","value":"execWallMs"}},{"kind":"Field","name":{"kind":"Name","value":"queueMs"}},{"kind":"Field","name":{"kind":"Name","value":"p50Ms"}},{"kind":"Field","name":{"kind":"Name","value":"p95Ms"}},{"kind":"Field","name":{"kind":"Name","value":"maxMs"}},{"kind":"Field","name":{"kind":"Name","value":"share"}}]}},{"kind":"Field","name":{"kind":"Name","value":"churn"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"keyId"}},{"kind":"Field","name":{"kind":"Name","value":"targetLabel"}},{"kind":"Field","name":{"kind":"Name","value":"mnemonic"}},{"kind":"Field","name":{"kind":"Name","value":"primaryOutput"}},{"kind":"Field","name":{"kind":"Name","value":"changes"}},{"kind":"Field","name":{"kind":"Name","value":"newVersions"}},{"kind":"Field","name":{"kind":"Name","value":"direct"}},{"kind":"Field","name":{"kind":"Name","value":"dependency"}},{"kind":"Field","name":{"kind":"Name","value":"both"}},{"kind":"Field","name":{"kind":"Name","value":"unknown"}},{"kind":"Field","name":{"kind":"Name","value":"executedAfterChange"}},{"kind":"Field","name":{"kind":"Name","value":"timeMs"}},{"kind":"Field","name":{"kind":"Name","value":"topCauses"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"count"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"causes"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"changes"}},{"kind":"Field","name":{"kind":"Name","value":"newVersions"}},{"kind":"Field","name":{"kind":"Name","value":"actionsAffected"}},{"kind":"Field","name":{"kind":"Name","value":"timeMs"}}]}}]}}]}}]} as unknown as DocumentNode<ActionInsightsQuery, ActionInsightsQueryVariables>;
+export const ActionHistoryDocument = {"__meta__":{"hash":"b758a41fe480a068c63425d61be3ce9ab6a743cb"},"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ActionHistory"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"keyId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"where"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"BazelInvocationWhereInput"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"invocationLimit"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"actionHistory"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"keyId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"keyId"}}},{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"Variable","name":{"kind":"Name","value":"where"}}},{"kind":"Argument","name":{"kind":"Name","value":"invocationLimit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"invocationLimit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"invocationId"}},{"kind":"Field","name":{"kind":"Name","value":"startedAt"}},{"kind":"Field","name":{"kind":"Name","value":"instanceName"}},{"kind":"Field","name":{"kind":"Name","value":"digestFunction"}},{"kind":"Field","name":{"kind":"Name","value":"digest"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"hash"}},{"kind":"Field","name":{"kind":"Name","value":"sizeBytes"}}]}},{"kind":"Field","name":{"kind":"Name","value":"previousDigest"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"hash"}},{"kind":"Field","name":{"kind":"Name","value":"sizeBytes"}}]}},{"kind":"Field","name":{"kind":"Name","value":"changed"}},{"kind":"Field","name":{"kind":"Name","value":"newVersion"}},{"kind":"Field","name":{"kind":"Name","value":"cause"}},{"kind":"Field","name":{"kind":"Name","value":"changedGroups"}},{"kind":"Field","name":{"kind":"Name","value":"executions"}},{"kind":"Field","name":{"kind":"Name","value":"executedMs"}},{"kind":"Field","name":{"kind":"Name","value":"execution"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"runner"}},{"kind":"Field","name":{"kind":"Name","value":"exitCode"}},{"kind":"Field","name":{"kind":"Name","value":"totalMs"}},{"kind":"Field","name":{"kind":"Name","value":"queueMs"}},{"kind":"Field","name":{"kind":"Name","value":"execWallMs"}},{"kind":"Field","name":{"kind":"Name","value":"fetchMs"}},{"kind":"Field","name":{"kind":"Name","value":"uploadMs"}},{"kind":"Field","name":{"kind":"Name","value":"inputBytes"}},{"kind":"Field","name":{"kind":"Name","value":"inputFiles"}},{"kind":"Field","name":{"kind":"Name","value":"memoryPeakBytes"}}]}}]}}]}}]} as unknown as DocumentNode<ActionHistoryQuery, ActionHistoryQueryVariables>;
+export const ActionInsightsFilterOptionsDocument = {"__meta__":{"hash":"526308ca458b2b3b5a539fb23288c7f722fe6286"},"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ActionInsightsFilterOptions"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"where"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"BazelInvocationWhereInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"actionInsightsFilterOptions"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"Variable","name":{"kind":"Name","value":"where"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"repos"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"value"}},{"kind":"Field","name":{"kind":"Name","value":"invocations"}}]}},{"kind":"Field","name":{"kind":"Name","value":"refs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"repo"}},{"kind":"Field","name":{"kind":"Name","value":"ref"}},{"kind":"Field","name":{"kind":"Name","value":"invocations"}}]}},{"kind":"Field","name":{"kind":"Name","value":"users"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"value"}},{"kind":"Field","name":{"kind":"Name","value":"invocations"}}]}}]}}]}}]} as unknown as DocumentNode<ActionInsightsFilterOptionsQuery, ActionInsightsFilterOptionsQueryVariables>;
 export const FindBuildTimesDocument = {"__meta__":{"hash":"11abaedfa9dad1b72f142f7f432d21c0f5c8eceb"},"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"FindBuildTimes"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"first"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"where"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"BazelInvocationWhereInput"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"orderBy"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"BazelInvocationOrder"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"findBazelInvocations"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"first"},"value":{"kind":"Variable","name":{"kind":"Name","value":"first"}}},{"kind":"Argument","name":{"kind":"Name","value":"where"},"value":{"kind":"Variable","name":{"kind":"Name","value":"where"}}},{"kind":"Argument","name":{"kind":"Name","value":"orderBy"},"value":{"kind":"Variable","name":{"kind":"Name","value":"orderBy"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"pageInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"startCursor"}},{"kind":"Field","name":{"kind":"Name","value":"endCursor"}},{"kind":"Field","name":{"kind":"Name","value":"hasNextPage"}},{"kind":"Field","name":{"kind":"Name","value":"hasPreviousPage"}}]}},{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"edges"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"node"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"invocationID"}},{"kind":"Field","name":{"kind":"Name","value":"startedAt"}},{"kind":"Field","name":{"kind":"Name","value":"endedAt"}}]}}]}}]}}]}}]} as unknown as DocumentNode<FindBuildTimesQuery, FindBuildTimesQueryVariables>;
 export const GetBazelInvocationCommonDocument = {"__meta__":{"hash":"4be700b552d9ddf7ba77107cd1ee5ab711ef1256"},"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetBazelInvocationCommon"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"invocationID"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UUID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"getBazelInvocation"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"invocationID"},"value":{"kind":"Variable","name":{"kind":"Name","value":"invocationID"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"BazelInvocationCommon"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"FileDetails"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"File"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"filePath"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"path"}}]}},{"kind":"Field","name":{"kind":"Name","value":"digest"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"rev2InstanceName"}},{"kind":"Field","name":{"kind":"Name","value":"digestFunction"}},{"kind":"Field","name":{"kind":"Name","value":"hash"}},{"kind":"Field","name":{"kind":"Name","value":"sizeBytes"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"BazelInvocationCommon"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"BazelInvocation"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"invocationID"}},{"kind":"Field","name":{"kind":"Name","value":"startedAt"}},{"kind":"Field","name":{"kind":"Name","value":"endedAt"}},{"kind":"Field","name":{"kind":"Name","value":"exitCodeName"}},{"kind":"Field","name":{"kind":"Name","value":"connectionMetadata"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"connectionLastOpenAt"}},{"kind":"Field","name":{"kind":"Name","value":"timeSinceLastConnectionMillis"}}]}},{"kind":"Field","name":{"kind":"Name","value":"username"}},{"kind":"Field","name":{"kind":"Name","value":"authenticatedUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"displayName"}},{"kind":"Field","name":{"kind":"Name","value":"userUUID"}}]}},{"kind":"Field","name":{"kind":"Name","value":"build"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"buildUUID"}}]}},{"kind":"Field","name":{"kind":"Name","value":"metrics"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"actions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"profile"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FileDetails"}}]}},{"kind":"Field","name":{"kind":"Name","value":"sourceControl"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]} as unknown as DocumentNode<GetBazelInvocationCommonQuery, GetBazelInvocationCommonQueryVariables>;
 export const GetBazelInvocationActionsDocument = {"__meta__":{"hash":"b61cfa00a5a9bf542b1b110d02405c2aef7848a5"},"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetBazelInvocationActions"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"invocationID"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UUID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"getBazelInvocation"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"invocationID"},"value":{"kind":"Variable","name":{"kind":"Name","value":"invocationID"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"actions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"BazelInvocationActions"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"FileDetails"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"File"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"filePath"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"path"}}]}},{"kind":"Field","name":{"kind":"Name","value":"digest"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"rev2InstanceName"}},{"kind":"Field","name":{"kind":"Name","value":"digestFunction"}},{"kind":"Field","name":{"kind":"Name","value":"hash"}},{"kind":"Field","name":{"kind":"Name","value":"sizeBytes"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"BazelInvocationActions"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Action"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"exitCode"}},{"kind":"Field","name":{"kind":"Name","value":"commandLine"}},{"kind":"Field","name":{"kind":"Name","value":"startTime"}},{"kind":"Field","name":{"kind":"Name","value":"endTime"}},{"kind":"Field","name":{"kind":"Name","value":"failureCode"}},{"kind":"Field","name":{"kind":"Name","value":"failureMessage"}},{"kind":"Field","name":{"kind":"Name","value":"configuration"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"configurationID"}},{"kind":"Field","name":{"kind":"Name","value":"mnemonic"}},{"kind":"Field","name":{"kind":"Name","value":"platformName"}},{"kind":"Field","name":{"kind":"Name","value":"cpu"}},{"kind":"Field","name":{"kind":"Name","value":"makeVariables"}}]}},{"kind":"Field","name":{"kind":"Name","value":"stdout"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FileDetails"}}]}},{"kind":"Field","name":{"kind":"Name","value":"stderr"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FileDetails"}}]}}]}}]} as unknown as DocumentNode<GetBazelInvocationActionsQuery, GetBazelInvocationActionsQueryVariables>;
