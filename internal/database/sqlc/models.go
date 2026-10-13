@@ -52,6 +52,32 @@ type ActionDatum struct {
 	ActionSummaryActionData sql.NullInt64
 }
 
+type ActionExecution struct {
+	ID                int64
+	Runner            sql.NullString
+	ExitCode          int32
+	TotalMs           int64
+	QueueMs           int64
+	ExecWallMs        int64
+	FetchMs           int64
+	UploadMs          int64
+	InputBytes        int64
+	InputFiles        int64
+	MemoryPeakBytes   int64
+	StartOffsetMs     sql.NullInt64
+	ActionKeyID       int64
+	ActionVersionID   int64
+	BazelInvocationID int64
+}
+
+type ActionKey struct {
+	ID             int64
+	TargetLabel    string
+	Mnemonic       string
+	PrimaryOutput  string
+	InstanceNameID int64
+}
+
 type ActionSummary struct {
 	ID                                int64
 	ActionsCreated                    sql.NullInt64
@@ -59,6 +85,16 @@ type ActionSummary struct {
 	ActionsExecuted                   sql.NullInt64
 	RemoteCacheHits                   sql.NullInt64
 	MetricsActionSummary              sql.NullInt64
+}
+
+type ActionVersion struct {
+	ID              int64
+	DigestHash      []byte
+	DigestSizeBytes int64
+	Groups          pqtype.NullRawMessage
+	FirstSeenAt     time.Time
+	LastSeenAt      time.Time
+	ActionKeyID     int64
 }
 
 type ArtifactMetric struct {
@@ -105,6 +141,7 @@ type BazelInvocation struct {
 	ProcessedEventWorkspaceStatus     bool
 	AuthenticatedUserBazelInvocations sql.NullInt64
 	ProfileID                         sql.NullInt64
+	ExecLogID                         sql.NullInt64
 	BuildInvocations                  sql.NullInt64
 	InstanceNameBazelInvocations      int64
 }
@@ -224,6 +261,24 @@ type EventMetadatum struct {
 	Handled           []byte
 	EventReceivedAt   time.Time
 	Version           int64
+	BazelInvocationID int64
+}
+
+type ExecLogSummary struct {
+	ID                int64
+	Status            string
+	Error             sql.NullString
+	Attempts          int32
+	StartedAt         time.Time
+	FinishedAt        sql.NullTime
+	Rev2InstanceName  sql.NullString
+	DigestFunction    sql.NullInt16
+	SpawnCount        int64
+	CacheHits         int64
+	ExecutedCount     int64
+	ParseMs           int64
+	Bytes             int64
+	SpawnIndex        []byte
 	BazelInvocationID int64
 }
 

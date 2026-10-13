@@ -10,9 +10,13 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//ent/gen/ent",
+        "//ent/gen/ent/actionexecution",
+        "//ent/gen/ent/actionkey",
+        "//ent/gen/ent/actionversion",
         "//ent/gen/ent/authenticateduser",
         "//ent/gen/ent/bazelinvocation",
         "//ent/gen/ent/build",
+        "//ent/gen/ent/execlogsummary",
         "//ent/gen/ent/file",
         "//ent/gen/ent/filepath",
         "//ent/gen/ent/instancename",
@@ -31,6 +35,7 @@ go_test(
     name = "authschema_test",
     srcs = ["privacy_test.go"],
     deps = [
+        "//ent/gen/ent/execlogsummary",
         "//ent/gen/ent/invocationtarget",
         "//ent/gen/ent/runtime",
         "//internal/database/dbauthservice",

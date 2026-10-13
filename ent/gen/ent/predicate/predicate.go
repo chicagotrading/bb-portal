@@ -15,8 +15,17 @@ type ActionCacheStatistics func(*sql.Selector)
 // ActionData is the predicate function for actiondata builders.
 type ActionData func(*sql.Selector)
 
+// ActionExecution is the predicate function for actionexecution builders.
+type ActionExecution func(*sql.Selector)
+
+// ActionKey is the predicate function for actionkey builders.
+type ActionKey func(*sql.Selector)
+
 // ActionSummary is the predicate function for actionsummary builders.
 type ActionSummary func(*sql.Selector)
+
+// ActionVersion is the predicate function for actionversion builders.
+type ActionVersion func(*sql.Selector)
 
 // ArtifactMetrics is the predicate function for artifactmetrics builders.
 type ArtifactMetrics func(*sql.Selector)
@@ -68,6 +77,9 @@ type DynamicExecutionRaceStatistic func(*sql.Selector)
 
 // EventMetadata is the predicate function for eventmetadata builders.
 type EventMetadata func(*sql.Selector)
+
+// ExecLogSummary is the predicate function for execlogsummary builders.
+type ExecLogSummary func(*sql.Selector)
 
 // File is the predicate function for file builders.
 type File func(*sql.Selector)

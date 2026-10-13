@@ -96,6 +96,7 @@ WHERE ctid IN (
             NOT EXISTS (
                 SELECT 1 FROM "bazel_invocations"
                 WHERE "profile_id" = "files"."id"
+                  OR "exec_log_id" = "files"."id"
             )
         )
         AND (

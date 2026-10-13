@@ -14,6 +14,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/action"
+	"github.com/buildbarn/bb-portal/ent/gen/ent/actionexecution"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/authenticateduser"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/bazelinvocation"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/build"
@@ -21,6 +22,7 @@ import (
 	"github.com/buildbarn/bb-portal/ent/gen/ent/configuration"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/connectionmetadata"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/eventmetadata"
+	"github.com/buildbarn/bb-portal/ent/gen/ent/execlogsummary"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/file"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/incompletebuildlog"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/instancename"
@@ -51,6 +53,9 @@ type BazelInvocationQuery struct {
 	withIncompleteBuildLogs      *IncompleteBuildLogQuery
 	withBuildLogChunks           *BuildLogChunkQuery
 	withProfile                  *FileQuery
+	withExecLog                  *FileQuery
+	withExecLogSummary           *ExecLogSummaryQuery
+	withActionExecutions         *ActionExecutionQuery
 	withInvocationTargets        *InvocationTargetQuery
 	withTargetKindMappings       *TargetKindMappingQuery
 	withSourceControl            *SourceControlQuery
@@ -62,6 +67,7 @@ type BazelInvocationQuery struct {
 	withNamedActions             map[string]*ActionQuery
 	withNamedIncompleteBuildLogs map[string]*IncompleteBuildLogQuery
 	withNamedBuildLogChunks      map[string]*BuildLogChunkQuery
+	withNamedActionExecutions    map[string]*ActionExecutionQuery
 	withNamedInvocationTargets   map[string]*InvocationTargetQuery
 	withNamedTargetKindMappings  map[string]*TargetKindMappingQuery
 	withNamedSourceControl       map[string]*SourceControlQuery
@@ -365,6 +371,72 @@ func (_q *BazelInvocationQuery) QueryProfile() *FileQuery {
 	return query
 }
 
+// QueryExecLog chains the current query on the "exec_log" edge.
+func (_q *BazelInvocationQuery) QueryExecLog() *FileQuery {
+	query := (&FileClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(bazelinvocation.Table, bazelinvocation.FieldID, selector),
+			sqlgraph.To(file.Table, file.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, bazelinvocation.ExecLogTable, bazelinvocation.ExecLogColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryExecLogSummary chains the current query on the "exec_log_summary" edge.
+func (_q *BazelInvocationQuery) QueryExecLogSummary() *ExecLogSummaryQuery {
+	query := (&ExecLogSummaryClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(bazelinvocation.Table, bazelinvocation.FieldID, selector),
+			sqlgraph.To(execlogsummary.Table, execlogsummary.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, bazelinvocation.ExecLogSummaryTable, bazelinvocation.ExecLogSummaryColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryActionExecutions chains the current query on the "action_executions" edge.
+func (_q *BazelInvocationQuery) QueryActionExecutions() *ActionExecutionQuery {
+	query := (&ActionExecutionClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(bazelinvocation.Table, bazelinvocation.FieldID, selector),
+			sqlgraph.To(actionexecution.Table, actionexecution.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, bazelinvocation.ActionExecutionsTable, bazelinvocation.ActionExecutionsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // QueryInvocationTargets chains the current query on the "invocation_targets" edge.
 func (_q *BazelInvocationQuery) QueryInvocationTargets() *InvocationTargetQuery {
 	query := (&InvocationTargetClient{config: _q.config}).Query()
@@ -635,6 +707,9 @@ func (_q *BazelInvocationQuery) Clone() *BazelInvocationQuery {
 		withIncompleteBuildLogs: _q.withIncompleteBuildLogs.Clone(),
 		withBuildLogChunks:      _q.withBuildLogChunks.Clone(),
 		withProfile:             _q.withProfile.Clone(),
+		withExecLog:             _q.withExecLog.Clone(),
+		withExecLogSummary:      _q.withExecLogSummary.Clone(),
+		withActionExecutions:    _q.withActionExecutions.Clone(),
 		withInvocationTargets:   _q.withInvocationTargets.Clone(),
 		withTargetKindMappings:  _q.withTargetKindMappings.Clone(),
 		withSourceControl:       _q.withSourceControl.Clone(),
@@ -776,6 +851,39 @@ func (_q *BazelInvocationQuery) WithProfile(opts ...func(*FileQuery)) *BazelInvo
 	return _q
 }
 
+// WithExecLog tells the query-builder to eager-load the nodes that are connected to
+// the "exec_log" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *BazelInvocationQuery) WithExecLog(opts ...func(*FileQuery)) *BazelInvocationQuery {
+	query := (&FileClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withExecLog = query
+	return _q
+}
+
+// WithExecLogSummary tells the query-builder to eager-load the nodes that are connected to
+// the "exec_log_summary" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *BazelInvocationQuery) WithExecLogSummary(opts ...func(*ExecLogSummaryQuery)) *BazelInvocationQuery {
+	query := (&ExecLogSummaryClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withExecLogSummary = query
+	return _q
+}
+
+// WithActionExecutions tells the query-builder to eager-load the nodes that are connected to
+// the "action_executions" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *BazelInvocationQuery) WithActionExecutions(opts ...func(*ActionExecutionQuery)) *BazelInvocationQuery {
+	query := (&ActionExecutionClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withActionExecutions = query
+	return _q
+}
+
 // WithInvocationTargets tells the query-builder to eager-load the nodes that are connected to
 // the "invocation_targets" edge. The optional arguments are used to configure the query builder of the edge.
 func (_q *BazelInvocationQuery) WithInvocationTargets(opts ...func(*InvocationTargetQuery)) *BazelInvocationQuery {
@@ -894,7 +1002,7 @@ func (_q *BazelInvocationQuery) sqlAll(ctx context.Context, hooks ...queryHook) 
 		nodes       = []*BazelInvocation{}
 		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
-		loadedTypes = [15]bool{
+		loadedTypes = [18]bool{
 			_q.withInstanceName != nil,
 			_q.withBuild != nil,
 			_q.withAuthenticatedUser != nil,
@@ -907,6 +1015,9 @@ func (_q *BazelInvocationQuery) sqlAll(ctx context.Context, hooks ...queryHook) 
 			_q.withIncompleteBuildLogs != nil,
 			_q.withBuildLogChunks != nil,
 			_q.withProfile != nil,
+			_q.withExecLog != nil,
+			_q.withExecLogSummary != nil,
+			_q.withActionExecutions != nil,
 			_q.withInvocationTargets != nil,
 			_q.withTargetKindMappings != nil,
 			_q.withSourceControl != nil,
@@ -1018,6 +1129,27 @@ func (_q *BazelInvocationQuery) sqlAll(ctx context.Context, hooks ...queryHook) 
 			return nil, err
 		}
 	}
+	if query := _q.withExecLog; query != nil {
+		if err := _q.loadExecLog(ctx, query, nodes, nil,
+			func(n *BazelInvocation, e *File) { n.Edges.ExecLog = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withExecLogSummary; query != nil {
+		if err := _q.loadExecLogSummary(ctx, query, nodes, nil,
+			func(n *BazelInvocation, e *ExecLogSummary) { n.Edges.ExecLogSummary = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withActionExecutions; query != nil {
+		if err := _q.loadActionExecutions(ctx, query, nodes,
+			func(n *BazelInvocation) { n.Edges.ActionExecutions = []*ActionExecution{} },
+			func(n *BazelInvocation, e *ActionExecution) {
+				n.Edges.ActionExecutions = append(n.Edges.ActionExecutions, e)
+			}); err != nil {
+			return nil, err
+		}
+	}
 	if query := _q.withInvocationTargets; query != nil {
 		if err := _q.loadInvocationTargets(ctx, query, nodes,
 			func(n *BazelInvocation) { n.Edges.InvocationTargets = []*InvocationTarget{} },
@@ -1075,6 +1207,13 @@ func (_q *BazelInvocationQuery) sqlAll(ctx context.Context, hooks ...queryHook) 
 		if err := _q.loadBuildLogChunks(ctx, query, nodes,
 			func(n *BazelInvocation) { n.appendNamedBuildLogChunks(name) },
 			func(n *BazelInvocation, e *BuildLogChunk) { n.appendNamedBuildLogChunks(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range _q.withNamedActionExecutions {
+		if err := _q.loadActionExecutions(ctx, query, nodes,
+			func(n *BazelInvocation) { n.appendNamedActionExecutions(name) },
+			func(n *BazelInvocation, e *ActionExecution) { n.appendNamedActionExecutions(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -1466,6 +1605,92 @@ func (_q *BazelInvocationQuery) loadProfile(ctx context.Context, query *FileQuer
 	}
 	return nil
 }
+func (_q *BazelInvocationQuery) loadExecLog(ctx context.Context, query *FileQuery, nodes []*BazelInvocation, init func(*BazelInvocation), assign func(*BazelInvocation, *File)) error {
+	ids := make([]int64, 0, len(nodes))
+	nodeids := make(map[int64][]*BazelInvocation)
+	for i := range nodes {
+		fk := nodes[i].ExecLogID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(file.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "exec_log_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (_q *BazelInvocationQuery) loadExecLogSummary(ctx context.Context, query *ExecLogSummaryQuery, nodes []*BazelInvocation, init func(*BazelInvocation), assign func(*BazelInvocation, *ExecLogSummary)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*BazelInvocation)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(execlogsummary.FieldBazelInvocationID)
+	}
+	query.Where(predicate.ExecLogSummary(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(bazelinvocation.ExecLogSummaryColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.BazelInvocationID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "bazel_invocation_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *BazelInvocationQuery) loadActionExecutions(ctx context.Context, query *ActionExecutionQuery, nodes []*BazelInvocation, init func(*BazelInvocation), assign func(*BazelInvocation, *ActionExecution)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*BazelInvocation)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(actionexecution.FieldBazelInvocationID)
+	}
+	query.Where(predicate.ActionExecution(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(bazelinvocation.ActionExecutionsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.BazelInvocationID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "bazel_invocation_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
 func (_q *BazelInvocationQuery) loadInvocationTargets(ctx context.Context, query *InvocationTargetQuery, nodes []*BazelInvocation, init func(*BazelInvocation), assign func(*BazelInvocation, *InvocationTarget)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[int64]*BazelInvocation)
@@ -1590,6 +1815,9 @@ func (_q *BazelInvocationQuery) querySpec() *sqlgraph.QuerySpec {
 		if _q.withProfile != nil {
 			_spec.Node.AddColumnOnce(bazelinvocation.FieldProfileID)
 		}
+		if _q.withExecLog != nil {
+			_spec.Node.AddColumnOnce(bazelinvocation.FieldExecLogID)
+		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -1713,6 +1941,20 @@ func (_q *BazelInvocationQuery) WithNamedBuildLogChunks(name string, opts ...fun
 		_q.withNamedBuildLogChunks = make(map[string]*BuildLogChunkQuery)
 	}
 	_q.withNamedBuildLogChunks[name] = query
+	return _q
+}
+
+// WithNamedActionExecutions tells the query-builder to eager-load the nodes that are connected to the "action_executions"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (_q *BazelInvocationQuery) WithNamedActionExecutions(name string, opts ...func(*ActionExecutionQuery)) *BazelInvocationQuery {
+	query := (&ActionExecutionClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if _q.withNamedActionExecutions == nil {
+		_q.withNamedActionExecutions = make(map[string]*ActionExecutionQuery)
+	}
+	_q.withNamedActionExecutions[name] = query
 	return _q
 }
 

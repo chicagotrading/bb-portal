@@ -40,19 +40,22 @@ type FileEdges struct {
 	ActionStderr []*Action `json:"action_stderr,omitempty"`
 	// InvocationProfile holds the value of the invocation_profile edge.
 	InvocationProfile []*BazelInvocation `json:"invocation_profile,omitempty"`
+	// InvocationExecLog holds the value of the invocation_exec_log edge.
+	InvocationExecLog []*BazelInvocation `json:"invocation_exec_log,omitempty"`
 	// TestActionOutput holds the value of the test_action_output edge.
 	TestActionOutput []*TestResult `json:"test_action_output,omitempty"`
 	// TestActionOutputTable holds the value of the test_action_output_table edge.
 	TestActionOutputTable []*TestActionOutput `json:"test_action_output_table,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [7]bool
+	loadedTypes [8]bool
 	// totalCount holds the count of the edges above.
 	totalCount [6]map[string]int
 
 	namedActionStdout          map[string][]*Action
 	namedActionStderr          map[string][]*Action
 	namedInvocationProfile     map[string][]*BazelInvocation
+	namedInvocationExecLog     map[string][]*BazelInvocation
 	namedTestActionOutput      map[string][]*TestResult
 	namedTestActionOutputTable map[string][]*TestActionOutput
 }
@@ -106,10 +109,19 @@ func (e FileEdges) InvocationProfileOrErr() ([]*BazelInvocation, error) {
 	return nil, &NotLoadedError{edge: "invocation_profile"}
 }
 
+// InvocationExecLogOrErr returns the InvocationExecLog value or an error if the edge
+// was not loaded in eager-loading.
+func (e FileEdges) InvocationExecLogOrErr() ([]*BazelInvocation, error) {
+	if e.loadedTypes[5] {
+		return e.InvocationExecLog, nil
+	}
+	return nil, &NotLoadedError{edge: "invocation_exec_log"}
+}
+
 // TestActionOutputOrErr returns the TestActionOutput value or an error if the edge
 // was not loaded in eager-loading.
 func (e FileEdges) TestActionOutputOrErr() ([]*TestResult, error) {
-	if e.loadedTypes[5] {
+	if e.loadedTypes[6] {
 		return e.TestActionOutput, nil
 	}
 	return nil, &NotLoadedError{edge: "test_action_output"}
@@ -118,7 +130,7 @@ func (e FileEdges) TestActionOutputOrErr() ([]*TestResult, error) {
 // TestActionOutputTableOrErr returns the TestActionOutputTable value or an error if the edge
 // was not loaded in eager-loading.
 func (e FileEdges) TestActionOutputTableOrErr() ([]*TestActionOutput, error) {
-	if e.loadedTypes[6] {
+	if e.loadedTypes[7] {
 		return e.TestActionOutputTable, nil
 	}
 	return nil, &NotLoadedError{edge: "test_action_output_table"}
@@ -200,6 +212,11 @@ func (_m *File) QueryActionStderr() *ActionQuery {
 // QueryInvocationProfile queries the "invocation_profile" edge of the File entity.
 func (_m *File) QueryInvocationProfile() *BazelInvocationQuery {
 	return NewFileClient(_m.config).QueryInvocationProfile(_m)
+}
+
+// QueryInvocationExecLog queries the "invocation_exec_log" edge of the File entity.
+func (_m *File) QueryInvocationExecLog() *BazelInvocationQuery {
+	return NewFileClient(_m.config).QueryInvocationExecLog(_m)
 }
 
 // QueryTestActionOutput queries the "test_action_output" edge of the File entity.
@@ -313,6 +330,30 @@ func (_m *File) appendNamedInvocationProfile(name string, edges ...*BazelInvocat
 		_m.Edges.namedInvocationProfile[name] = []*BazelInvocation{}
 	} else {
 		_m.Edges.namedInvocationProfile[name] = append(_m.Edges.namedInvocationProfile[name], edges...)
+	}
+}
+
+// NamedInvocationExecLog returns the InvocationExecLog named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (_m *File) NamedInvocationExecLog(name string) ([]*BazelInvocation, error) {
+	if _m.Edges.namedInvocationExecLog == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := _m.Edges.namedInvocationExecLog[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (_m *File) appendNamedInvocationExecLog(name string, edges ...*BazelInvocation) {
+	if _m.Edges.namedInvocationExecLog == nil {
+		_m.Edges.namedInvocationExecLog = make(map[string][]*BazelInvocation)
+	}
+	if len(edges) == 0 {
+		_m.Edges.namedInvocationExecLog[name] = []*BazelInvocation{}
+	} else {
+		_m.Edges.namedInvocationExecLog[name] = append(_m.Edges.namedInvocationExecLog[name], edges...)
 	}
 }
 

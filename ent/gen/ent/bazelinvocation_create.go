@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/action"
+	"github.com/buildbarn/bb-portal/ent/gen/ent/actionexecution"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/authenticateduser"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/bazelinvocation"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/build"
@@ -19,6 +20,7 @@ import (
 	"github.com/buildbarn/bb-portal/ent/gen/ent/configuration"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/connectionmetadata"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/eventmetadata"
+	"github.com/buildbarn/bb-portal/ent/gen/ent/execlogsummary"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/file"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/incompletebuildlog"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/instancename"
@@ -145,6 +147,20 @@ func (_c *BazelInvocationCreate) SetProfileID(v int64) *BazelInvocationCreate {
 func (_c *BazelInvocationCreate) SetNillableProfileID(v *int64) *BazelInvocationCreate {
 	if v != nil {
 		_c.SetProfileID(*v)
+	}
+	return _c
+}
+
+// SetExecLogID sets the "exec_log_id" field.
+func (_c *BazelInvocationCreate) SetExecLogID(v int64) *BazelInvocationCreate {
+	_c.mutation.SetExecLogID(v)
+	return _c
+}
+
+// SetNillableExecLogID sets the "exec_log_id" field if the given value is not nil.
+func (_c *BazelInvocationCreate) SetNillableExecLogID(v *int64) *BazelInvocationCreate {
+	if v != nil {
+		_c.SetExecLogID(*v)
 	}
 	return _c
 }
@@ -461,6 +477,45 @@ func (_c *BazelInvocationCreate) AddBuildLogChunks(v ...*BuildLogChunk) *BazelIn
 // SetProfile sets the "profile" edge to the File entity.
 func (_c *BazelInvocationCreate) SetProfile(v *File) *BazelInvocationCreate {
 	return _c.SetProfileID(v.ID)
+}
+
+// SetExecLog sets the "exec_log" edge to the File entity.
+func (_c *BazelInvocationCreate) SetExecLog(v *File) *BazelInvocationCreate {
+	return _c.SetExecLogID(v.ID)
+}
+
+// SetExecLogSummaryID sets the "exec_log_summary" edge to the ExecLogSummary entity by ID.
+func (_c *BazelInvocationCreate) SetExecLogSummaryID(id int64) *BazelInvocationCreate {
+	_c.mutation.SetExecLogSummaryID(id)
+	return _c
+}
+
+// SetNillableExecLogSummaryID sets the "exec_log_summary" edge to the ExecLogSummary entity by ID if the given value is not nil.
+func (_c *BazelInvocationCreate) SetNillableExecLogSummaryID(id *int64) *BazelInvocationCreate {
+	if id != nil {
+		_c = _c.SetExecLogSummaryID(*id)
+	}
+	return _c
+}
+
+// SetExecLogSummary sets the "exec_log_summary" edge to the ExecLogSummary entity.
+func (_c *BazelInvocationCreate) SetExecLogSummary(v *ExecLogSummary) *BazelInvocationCreate {
+	return _c.SetExecLogSummaryID(v.ID)
+}
+
+// AddActionExecutionIDs adds the "action_executions" edge to the ActionExecution entity by IDs.
+func (_c *BazelInvocationCreate) AddActionExecutionIDs(ids ...int64) *BazelInvocationCreate {
+	_c.mutation.AddActionExecutionIDs(ids...)
+	return _c
+}
+
+// AddActionExecutions adds the "action_executions" edges to the ActionExecution entity.
+func (_c *BazelInvocationCreate) AddActionExecutions(v ...*ActionExecution) *BazelInvocationCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddActionExecutionIDs(ids...)
 }
 
 // AddInvocationTargetIDs adds the "invocation_targets" edge to the InvocationTarget entity by IDs.
@@ -899,6 +954,55 @@ func (_c *BazelInvocationCreate) createSpec() (*BazelInvocation, *sqlgraph.Creat
 		_node.ProfileID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
+	if nodes := _c.mutation.ExecLogIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   bazelinvocation.ExecLogTable,
+			Columns: []string{bazelinvocation.ExecLogColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(file.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.ExecLogID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.ExecLogSummaryIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   bazelinvocation.ExecLogSummaryTable,
+			Columns: []string{bazelinvocation.ExecLogSummaryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(execlogsummary.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.ActionExecutionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   bazelinvocation.ActionExecutionsTable,
+			Columns: []string{bazelinvocation.ActionExecutionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(actionexecution.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	if nodes := _c.mutation.InvocationTargetsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -1122,6 +1226,24 @@ func (u *BazelInvocationUpsert) UpdateProfileID() *BazelInvocationUpsert {
 // ClearProfileID clears the value of the "profile_id" field.
 func (u *BazelInvocationUpsert) ClearProfileID() *BazelInvocationUpsert {
 	u.SetNull(bazelinvocation.FieldProfileID)
+	return u
+}
+
+// SetExecLogID sets the "exec_log_id" field.
+func (u *BazelInvocationUpsert) SetExecLogID(v int64) *BazelInvocationUpsert {
+	u.Set(bazelinvocation.FieldExecLogID, v)
+	return u
+}
+
+// UpdateExecLogID sets the "exec_log_id" field to the value that was provided on create.
+func (u *BazelInvocationUpsert) UpdateExecLogID() *BazelInvocationUpsert {
+	u.SetExcluded(bazelinvocation.FieldExecLogID)
+	return u
+}
+
+// ClearExecLogID clears the value of the "exec_log_id" field.
+func (u *BazelInvocationUpsert) ClearExecLogID() *BazelInvocationUpsert {
+	u.SetNull(bazelinvocation.FieldExecLogID)
 	return u
 }
 
@@ -1503,6 +1625,27 @@ func (u *BazelInvocationUpsertOne) UpdateProfileID() *BazelInvocationUpsertOne {
 func (u *BazelInvocationUpsertOne) ClearProfileID() *BazelInvocationUpsertOne {
 	return u.Update(func(s *BazelInvocationUpsert) {
 		s.ClearProfileID()
+	})
+}
+
+// SetExecLogID sets the "exec_log_id" field.
+func (u *BazelInvocationUpsertOne) SetExecLogID(v int64) *BazelInvocationUpsertOne {
+	return u.Update(func(s *BazelInvocationUpsert) {
+		s.SetExecLogID(v)
+	})
+}
+
+// UpdateExecLogID sets the "exec_log_id" field to the value that was provided on create.
+func (u *BazelInvocationUpsertOne) UpdateExecLogID() *BazelInvocationUpsertOne {
+	return u.Update(func(s *BazelInvocationUpsert) {
+		s.UpdateExecLogID()
+	})
+}
+
+// ClearExecLogID clears the value of the "exec_log_id" field.
+func (u *BazelInvocationUpsertOne) ClearExecLogID() *BazelInvocationUpsertOne {
+	return u.Update(func(s *BazelInvocationUpsert) {
+		s.ClearExecLogID()
 	})
 }
 
@@ -2080,6 +2223,27 @@ func (u *BazelInvocationUpsertBulk) UpdateProfileID() *BazelInvocationUpsertBulk
 func (u *BazelInvocationUpsertBulk) ClearProfileID() *BazelInvocationUpsertBulk {
 	return u.Update(func(s *BazelInvocationUpsert) {
 		s.ClearProfileID()
+	})
+}
+
+// SetExecLogID sets the "exec_log_id" field.
+func (u *BazelInvocationUpsertBulk) SetExecLogID(v int64) *BazelInvocationUpsertBulk {
+	return u.Update(func(s *BazelInvocationUpsert) {
+		s.SetExecLogID(v)
+	})
+}
+
+// UpdateExecLogID sets the "exec_log_id" field to the value that was provided on create.
+func (u *BazelInvocationUpsertBulk) UpdateExecLogID() *BazelInvocationUpsertBulk {
+	return u.Update(func(s *BazelInvocationUpsert) {
+		s.UpdateExecLogID()
+	})
+}
+
+// ClearExecLogID clears the value of the "exec_log_id" field.
+func (u *BazelInvocationUpsertBulk) ClearExecLogID() *BazelInvocationUpsertBulk {
+	return u.Update(func(s *BazelInvocationUpsert) {
+		s.ClearExecLogID()
 	})
 }
 

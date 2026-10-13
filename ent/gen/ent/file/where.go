@@ -218,6 +218,29 @@ func HasInvocationProfileWith(preds ...predicate.BazelInvocation) predicate.File
 	})
 }
 
+// HasInvocationExecLog applies the HasEdge predicate on the "invocation_exec_log" edge.
+func HasInvocationExecLog() predicate.File {
+	return predicate.File(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, InvocationExecLogTable, InvocationExecLogColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasInvocationExecLogWith applies the HasEdge predicate on the "invocation_exec_log" edge with a given conditions (other predicates).
+func HasInvocationExecLogWith(preds ...predicate.BazelInvocation) predicate.File {
+	return predicate.File(func(s *sql.Selector) {
+		step := newInvocationExecLogStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasTestActionOutput applies the HasEdge predicate on the "test_action_output" edge.
 func HasTestActionOutput() predicate.File {
 	return predicate.File(func(s *sql.Selector) {

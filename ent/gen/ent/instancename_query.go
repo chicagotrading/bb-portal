@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/buildbarn/bb-portal/ent/gen/ent/actionkey"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/bazelinvocation"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/build"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/filepath"
@@ -31,12 +32,14 @@ type InstanceNameQuery struct {
 	withBuilds                *BuildQuery
 	withTargets               *TargetQuery
 	withFilePaths             *FilePathQuery
+	withActionKeys            *ActionKeyQuery
 	modifiers                 []func(*sql.Selector)
 	loadTotal                 []func(context.Context, []*InstanceName) error
 	withNamedBazelInvocations map[string]*BazelInvocationQuery
 	withNamedBuilds           map[string]*BuildQuery
 	withNamedTargets          map[string]*TargetQuery
 	withNamedFilePaths        map[string]*FilePathQuery
+	withNamedActionKeys       map[string]*ActionKeyQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -154,6 +157,28 @@ func (_q *InstanceNameQuery) QueryFilePaths() *FilePathQuery {
 			sqlgraph.From(instancename.Table, instancename.FieldID, selector),
 			sqlgraph.To(filepath.Table, filepath.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, instancename.FilePathsTable, instancename.FilePathsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryActionKeys chains the current query on the "action_keys" edge.
+func (_q *InstanceNameQuery) QueryActionKeys() *ActionKeyQuery {
+	query := (&ActionKeyClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(instancename.Table, instancename.FieldID, selector),
+			sqlgraph.To(actionkey.Table, actionkey.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, instancename.ActionKeysTable, instancename.ActionKeysColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -357,6 +382,7 @@ func (_q *InstanceNameQuery) Clone() *InstanceNameQuery {
 		withBuilds:           _q.withBuilds.Clone(),
 		withTargets:          _q.withTargets.Clone(),
 		withFilePaths:        _q.withFilePaths.Clone(),
+		withActionKeys:       _q.withActionKeys.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -404,6 +430,17 @@ func (_q *InstanceNameQuery) WithFilePaths(opts ...func(*FilePathQuery)) *Instan
 		opt(query)
 	}
 	_q.withFilePaths = query
+	return _q
+}
+
+// WithActionKeys tells the query-builder to eager-load the nodes that are connected to
+// the "action_keys" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *InstanceNameQuery) WithActionKeys(opts ...func(*ActionKeyQuery)) *InstanceNameQuery {
+	query := (&ActionKeyClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withActionKeys = query
 	return _q
 }
 
@@ -485,11 +522,12 @@ func (_q *InstanceNameQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 	var (
 		nodes       = []*InstanceName{}
 		_spec       = _q.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [5]bool{
 			_q.withBazelInvocations != nil,
 			_q.withBuilds != nil,
 			_q.withTargets != nil,
 			_q.withFilePaths != nil,
+			_q.withActionKeys != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -543,6 +581,13 @@ func (_q *InstanceNameQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 			return nil, err
 		}
 	}
+	if query := _q.withActionKeys; query != nil {
+		if err := _q.loadActionKeys(ctx, query, nodes,
+			func(n *InstanceName) { n.Edges.ActionKeys = []*ActionKey{} },
+			func(n *InstanceName, e *ActionKey) { n.Edges.ActionKeys = append(n.Edges.ActionKeys, e) }); err != nil {
+			return nil, err
+		}
+	}
 	for name, query := range _q.withNamedBazelInvocations {
 		if err := _q.loadBazelInvocations(ctx, query, nodes,
 			func(n *InstanceName) { n.appendNamedBazelInvocations(name) },
@@ -568,6 +613,13 @@ func (_q *InstanceNameQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 		if err := _q.loadFilePaths(ctx, query, nodes,
 			func(n *InstanceName) { n.appendNamedFilePaths(name) },
 			func(n *InstanceName, e *FilePath) { n.appendNamedFilePaths(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range _q.withNamedActionKeys {
+		if err := _q.loadActionKeys(ctx, query, nodes,
+			func(n *InstanceName) { n.appendNamedActionKeys(name) },
+			func(n *InstanceName, e *ActionKey) { n.appendNamedActionKeys(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -697,6 +749,36 @@ func (_q *InstanceNameQuery) loadFilePaths(ctx context.Context, query *FilePathQ
 		node, ok := nodeids[fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "bep_instance_name_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *InstanceNameQuery) loadActionKeys(ctx context.Context, query *ActionKeyQuery, nodes []*InstanceName, init func(*InstanceName), assign func(*InstanceName, *ActionKey)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*InstanceName)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(actionkey.FieldInstanceNameID)
+	}
+	query.Where(predicate.ActionKey(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(instancename.ActionKeysColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.InstanceNameID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "instance_name_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}
@@ -840,6 +922,20 @@ func (_q *InstanceNameQuery) WithNamedFilePaths(name string, opts ...func(*FileP
 		_q.withNamedFilePaths = make(map[string]*FilePathQuery)
 	}
 	_q.withNamedFilePaths[name] = query
+	return _q
+}
+
+// WithNamedActionKeys tells the query-builder to eager-load the nodes that are connected to the "action_keys"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (_q *InstanceNameQuery) WithNamedActionKeys(name string, opts ...func(*ActionKeyQuery)) *InstanceNameQuery {
+	query := (&ActionKeyClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if _q.withNamedActionKeys == nil {
+		_q.withNamedActionKeys = make(map[string]*ActionKeyQuery)
+	}
+	_q.withNamedActionKeys[name] = query
 	return _q
 }
 

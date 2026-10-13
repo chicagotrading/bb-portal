@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/action"
+	"github.com/buildbarn/bb-portal/ent/gen/ent/actionexecution"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/authenticateduser"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/bazelinvocation"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/build"
@@ -19,6 +20,7 @@ import (
 	"github.com/buildbarn/bb-portal/ent/gen/ent/configuration"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/connectionmetadata"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/eventmetadata"
+	"github.com/buildbarn/bb-portal/ent/gen/ent/execlogsummary"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/file"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/incompletebuildlog"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/instancename"
@@ -182,6 +184,26 @@ func (_u *BazelInvocationUpdate) SetNillableProfileID(v *int64) *BazelInvocation
 // ClearProfileID clears the value of the "profile_id" field.
 func (_u *BazelInvocationUpdate) ClearProfileID() *BazelInvocationUpdate {
 	_u.mutation.ClearProfileID()
+	return _u
+}
+
+// SetExecLogID sets the "exec_log_id" field.
+func (_u *BazelInvocationUpdate) SetExecLogID(v int64) *BazelInvocationUpdate {
+	_u.mutation.SetExecLogID(v)
+	return _u
+}
+
+// SetNillableExecLogID sets the "exec_log_id" field if the given value is not nil.
+func (_u *BazelInvocationUpdate) SetNillableExecLogID(v *int64) *BazelInvocationUpdate {
+	if v != nil {
+		_u.SetExecLogID(*v)
+	}
+	return _u
+}
+
+// ClearExecLogID clears the value of the "exec_log_id" field.
+func (_u *BazelInvocationUpdate) ClearExecLogID() *BazelInvocationUpdate {
+	_u.mutation.ClearExecLogID()
 	return _u
 }
 
@@ -542,6 +564,45 @@ func (_u *BazelInvocationUpdate) SetProfile(v *File) *BazelInvocationUpdate {
 	return _u.SetProfileID(v.ID)
 }
 
+// SetExecLog sets the "exec_log" edge to the File entity.
+func (_u *BazelInvocationUpdate) SetExecLog(v *File) *BazelInvocationUpdate {
+	return _u.SetExecLogID(v.ID)
+}
+
+// SetExecLogSummaryID sets the "exec_log_summary" edge to the ExecLogSummary entity by ID.
+func (_u *BazelInvocationUpdate) SetExecLogSummaryID(id int64) *BazelInvocationUpdate {
+	_u.mutation.SetExecLogSummaryID(id)
+	return _u
+}
+
+// SetNillableExecLogSummaryID sets the "exec_log_summary" edge to the ExecLogSummary entity by ID if the given value is not nil.
+func (_u *BazelInvocationUpdate) SetNillableExecLogSummaryID(id *int64) *BazelInvocationUpdate {
+	if id != nil {
+		_u = _u.SetExecLogSummaryID(*id)
+	}
+	return _u
+}
+
+// SetExecLogSummary sets the "exec_log_summary" edge to the ExecLogSummary entity.
+func (_u *BazelInvocationUpdate) SetExecLogSummary(v *ExecLogSummary) *BazelInvocationUpdate {
+	return _u.SetExecLogSummaryID(v.ID)
+}
+
+// AddActionExecutionIDs adds the "action_executions" edge to the ActionExecution entity by IDs.
+func (_u *BazelInvocationUpdate) AddActionExecutionIDs(ids ...int64) *BazelInvocationUpdate {
+	_u.mutation.AddActionExecutionIDs(ids...)
+	return _u
+}
+
+// AddActionExecutions adds the "action_executions" edges to the ActionExecution entity.
+func (_u *BazelInvocationUpdate) AddActionExecutions(v ...*ActionExecution) *BazelInvocationUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddActionExecutionIDs(ids...)
+}
+
 // AddInvocationTargetIDs adds the "invocation_targets" edge to the InvocationTarget entity by IDs.
 func (_u *BazelInvocationUpdate) AddInvocationTargetIDs(ids ...int64) *BazelInvocationUpdate {
 	_u.mutation.AddInvocationTargetIDs(ids...)
@@ -737,6 +798,39 @@ func (_u *BazelInvocationUpdate) RemoveBuildLogChunks(v ...*BuildLogChunk) *Baze
 func (_u *BazelInvocationUpdate) ClearProfile() *BazelInvocationUpdate {
 	_u.mutation.ClearProfile()
 	return _u
+}
+
+// ClearExecLog clears the "exec_log" edge to the File entity.
+func (_u *BazelInvocationUpdate) ClearExecLog() *BazelInvocationUpdate {
+	_u.mutation.ClearExecLog()
+	return _u
+}
+
+// ClearExecLogSummary clears the "exec_log_summary" edge to the ExecLogSummary entity.
+func (_u *BazelInvocationUpdate) ClearExecLogSummary() *BazelInvocationUpdate {
+	_u.mutation.ClearExecLogSummary()
+	return _u
+}
+
+// ClearActionExecutions clears all "action_executions" edges to the ActionExecution entity.
+func (_u *BazelInvocationUpdate) ClearActionExecutions() *BazelInvocationUpdate {
+	_u.mutation.ClearActionExecutions()
+	return _u
+}
+
+// RemoveActionExecutionIDs removes the "action_executions" edge to ActionExecution entities by IDs.
+func (_u *BazelInvocationUpdate) RemoveActionExecutionIDs(ids ...int64) *BazelInvocationUpdate {
+	_u.mutation.RemoveActionExecutionIDs(ids...)
+	return _u
+}
+
+// RemoveActionExecutions removes "action_executions" edges to ActionExecution entities.
+func (_u *BazelInvocationUpdate) RemoveActionExecutions(v ...*ActionExecution) *BazelInvocationUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveActionExecutionIDs(ids...)
 }
 
 // ClearInvocationTargets clears all "invocation_targets" edges to the InvocationTarget entity.
@@ -1370,6 +1464,109 @@ func (_u *BazelInvocationUpdate) sqlSave(ctx context.Context) (_node int, err er
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.ExecLogCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   bazelinvocation.ExecLogTable,
+			Columns: []string{bazelinvocation.ExecLogColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(file.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ExecLogIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   bazelinvocation.ExecLogTable,
+			Columns: []string{bazelinvocation.ExecLogColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(file.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ExecLogSummaryCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   bazelinvocation.ExecLogSummaryTable,
+			Columns: []string{bazelinvocation.ExecLogSummaryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(execlogsummary.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ExecLogSummaryIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   bazelinvocation.ExecLogSummaryTable,
+			Columns: []string{bazelinvocation.ExecLogSummaryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(execlogsummary.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ActionExecutionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   bazelinvocation.ActionExecutionsTable,
+			Columns: []string{bazelinvocation.ActionExecutionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(actionexecution.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedActionExecutionsIDs(); len(nodes) > 0 && !_u.mutation.ActionExecutionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   bazelinvocation.ActionExecutionsTable,
+			Columns: []string{bazelinvocation.ActionExecutionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(actionexecution.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ActionExecutionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   bazelinvocation.ActionExecutionsTable,
+			Columns: []string{bazelinvocation.ActionExecutionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(actionexecution.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _u.mutation.InvocationTargetsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -1663,6 +1860,26 @@ func (_u *BazelInvocationUpdateOne) SetNillableProfileID(v *int64) *BazelInvocat
 // ClearProfileID clears the value of the "profile_id" field.
 func (_u *BazelInvocationUpdateOne) ClearProfileID() *BazelInvocationUpdateOne {
 	_u.mutation.ClearProfileID()
+	return _u
+}
+
+// SetExecLogID sets the "exec_log_id" field.
+func (_u *BazelInvocationUpdateOne) SetExecLogID(v int64) *BazelInvocationUpdateOne {
+	_u.mutation.SetExecLogID(v)
+	return _u
+}
+
+// SetNillableExecLogID sets the "exec_log_id" field if the given value is not nil.
+func (_u *BazelInvocationUpdateOne) SetNillableExecLogID(v *int64) *BazelInvocationUpdateOne {
+	if v != nil {
+		_u.SetExecLogID(*v)
+	}
+	return _u
+}
+
+// ClearExecLogID clears the value of the "exec_log_id" field.
+func (_u *BazelInvocationUpdateOne) ClearExecLogID() *BazelInvocationUpdateOne {
+	_u.mutation.ClearExecLogID()
 	return _u
 }
 
@@ -2023,6 +2240,45 @@ func (_u *BazelInvocationUpdateOne) SetProfile(v *File) *BazelInvocationUpdateOn
 	return _u.SetProfileID(v.ID)
 }
 
+// SetExecLog sets the "exec_log" edge to the File entity.
+func (_u *BazelInvocationUpdateOne) SetExecLog(v *File) *BazelInvocationUpdateOne {
+	return _u.SetExecLogID(v.ID)
+}
+
+// SetExecLogSummaryID sets the "exec_log_summary" edge to the ExecLogSummary entity by ID.
+func (_u *BazelInvocationUpdateOne) SetExecLogSummaryID(id int64) *BazelInvocationUpdateOne {
+	_u.mutation.SetExecLogSummaryID(id)
+	return _u
+}
+
+// SetNillableExecLogSummaryID sets the "exec_log_summary" edge to the ExecLogSummary entity by ID if the given value is not nil.
+func (_u *BazelInvocationUpdateOne) SetNillableExecLogSummaryID(id *int64) *BazelInvocationUpdateOne {
+	if id != nil {
+		_u = _u.SetExecLogSummaryID(*id)
+	}
+	return _u
+}
+
+// SetExecLogSummary sets the "exec_log_summary" edge to the ExecLogSummary entity.
+func (_u *BazelInvocationUpdateOne) SetExecLogSummary(v *ExecLogSummary) *BazelInvocationUpdateOne {
+	return _u.SetExecLogSummaryID(v.ID)
+}
+
+// AddActionExecutionIDs adds the "action_executions" edge to the ActionExecution entity by IDs.
+func (_u *BazelInvocationUpdateOne) AddActionExecutionIDs(ids ...int64) *BazelInvocationUpdateOne {
+	_u.mutation.AddActionExecutionIDs(ids...)
+	return _u
+}
+
+// AddActionExecutions adds the "action_executions" edges to the ActionExecution entity.
+func (_u *BazelInvocationUpdateOne) AddActionExecutions(v ...*ActionExecution) *BazelInvocationUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddActionExecutionIDs(ids...)
+}
+
 // AddInvocationTargetIDs adds the "invocation_targets" edge to the InvocationTarget entity by IDs.
 func (_u *BazelInvocationUpdateOne) AddInvocationTargetIDs(ids ...int64) *BazelInvocationUpdateOne {
 	_u.mutation.AddInvocationTargetIDs(ids...)
@@ -2218,6 +2474,39 @@ func (_u *BazelInvocationUpdateOne) RemoveBuildLogChunks(v ...*BuildLogChunk) *B
 func (_u *BazelInvocationUpdateOne) ClearProfile() *BazelInvocationUpdateOne {
 	_u.mutation.ClearProfile()
 	return _u
+}
+
+// ClearExecLog clears the "exec_log" edge to the File entity.
+func (_u *BazelInvocationUpdateOne) ClearExecLog() *BazelInvocationUpdateOne {
+	_u.mutation.ClearExecLog()
+	return _u
+}
+
+// ClearExecLogSummary clears the "exec_log_summary" edge to the ExecLogSummary entity.
+func (_u *BazelInvocationUpdateOne) ClearExecLogSummary() *BazelInvocationUpdateOne {
+	_u.mutation.ClearExecLogSummary()
+	return _u
+}
+
+// ClearActionExecutions clears all "action_executions" edges to the ActionExecution entity.
+func (_u *BazelInvocationUpdateOne) ClearActionExecutions() *BazelInvocationUpdateOne {
+	_u.mutation.ClearActionExecutions()
+	return _u
+}
+
+// RemoveActionExecutionIDs removes the "action_executions" edge to ActionExecution entities by IDs.
+func (_u *BazelInvocationUpdateOne) RemoveActionExecutionIDs(ids ...int64) *BazelInvocationUpdateOne {
+	_u.mutation.RemoveActionExecutionIDs(ids...)
+	return _u
+}
+
+// RemoveActionExecutions removes "action_executions" edges to ActionExecution entities.
+func (_u *BazelInvocationUpdateOne) RemoveActionExecutions(v ...*ActionExecution) *BazelInvocationUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveActionExecutionIDs(ids...)
 }
 
 // ClearInvocationTargets clears all "invocation_targets" edges to the InvocationTarget entity.
@@ -2874,6 +3163,109 @@ func (_u *BazelInvocationUpdateOne) sqlSave(ctx context.Context) (_node *BazelIn
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(file.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ExecLogCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   bazelinvocation.ExecLogTable,
+			Columns: []string{bazelinvocation.ExecLogColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(file.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ExecLogIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   bazelinvocation.ExecLogTable,
+			Columns: []string{bazelinvocation.ExecLogColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(file.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ExecLogSummaryCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   bazelinvocation.ExecLogSummaryTable,
+			Columns: []string{bazelinvocation.ExecLogSummaryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(execlogsummary.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ExecLogSummaryIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   bazelinvocation.ExecLogSummaryTable,
+			Columns: []string{bazelinvocation.ExecLogSummaryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(execlogsummary.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ActionExecutionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   bazelinvocation.ActionExecutionsTable,
+			Columns: []string{bazelinvocation.ActionExecutionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(actionexecution.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedActionExecutionsIDs(); len(nodes) > 0 && !_u.mutation.ActionExecutionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   bazelinvocation.ActionExecutionsTable,
+			Columns: []string{bazelinvocation.ActionExecutionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(actionexecution.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ActionExecutionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   bazelinvocation.ActionExecutionsTable,
+			Columns: []string{bazelinvocation.ActionExecutionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(actionexecution.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

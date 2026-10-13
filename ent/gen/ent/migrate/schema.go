@@ -142,6 +142,96 @@ var (
 			},
 		},
 	}
+	// ActionExecutionsColumns holds the columns for the "action_executions" table.
+	ActionExecutionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "runner", Type: field.TypeString, Nullable: true},
+		{Name: "exit_code", Type: field.TypeInt32, Default: 0},
+		{Name: "total_ms", Type: field.TypeInt64, Default: 0},
+		{Name: "queue_ms", Type: field.TypeInt64, Default: 0},
+		{Name: "exec_wall_ms", Type: field.TypeInt64, Default: 0},
+		{Name: "fetch_ms", Type: field.TypeInt64, Default: 0},
+		{Name: "upload_ms", Type: field.TypeInt64, Default: 0},
+		{Name: "input_bytes", Type: field.TypeInt64, Default: 0},
+		{Name: "input_files", Type: field.TypeInt64, Default: 0},
+		{Name: "memory_peak_bytes", Type: field.TypeInt64, Default: 0},
+		{Name: "start_offset_ms", Type: field.TypeInt64, Nullable: true},
+		{Name: "action_key_id", Type: field.TypeInt64},
+		{Name: "action_version_id", Type: field.TypeInt64},
+		{Name: "bazel_invocation_id", Type: field.TypeInt64},
+	}
+	// ActionExecutionsTable holds the schema information for the "action_executions" table.
+	ActionExecutionsTable = &schema.Table{
+		Name:       "action_executions",
+		Columns:    ActionExecutionsColumns,
+		PrimaryKey: []*schema.Column{ActionExecutionsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "action_executions_action_keys_executions",
+				Columns:    []*schema.Column{ActionExecutionsColumns[12]},
+				RefColumns: []*schema.Column{ActionKeysColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "action_executions_action_versions_executions",
+				Columns:    []*schema.Column{ActionExecutionsColumns[13]},
+				RefColumns: []*schema.Column{ActionVersionsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "action_executions_bazel_invocations_action_executions",
+				Columns:    []*schema.Column{ActionExecutionsColumns[14]},
+				RefColumns: []*schema.Column{BazelInvocationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "actionexecution_bazel_invocation_id",
+				Unique:  false,
+				Columns: []*schema.Column{ActionExecutionsColumns[14]},
+			},
+			{
+				Name:    "actionexecution_action_key_id_bazel_invocation_id",
+				Unique:  false,
+				Columns: []*schema.Column{ActionExecutionsColumns[12], ActionExecutionsColumns[14]},
+			},
+			{
+				Name:    "actionexecution_action_version_id",
+				Unique:  false,
+				Columns: []*schema.Column{ActionExecutionsColumns[13]},
+			},
+		},
+	}
+	// ActionKeysColumns holds the columns for the "action_keys" table.
+	ActionKeysColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "target_label", Type: field.TypeString},
+		{Name: "mnemonic", Type: field.TypeString},
+		{Name: "primary_output", Type: field.TypeString},
+		{Name: "instance_name_id", Type: field.TypeInt64},
+	}
+	// ActionKeysTable holds the schema information for the "action_keys" table.
+	ActionKeysTable = &schema.Table{
+		Name:       "action_keys",
+		Columns:    ActionKeysColumns,
+		PrimaryKey: []*schema.Column{ActionKeysColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "action_keys_instance_names_action_keys",
+				Columns:    []*schema.Column{ActionKeysColumns[4]},
+				RefColumns: []*schema.Column{InstanceNamesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "actionkey_instance_name_id_target_label_mnemonic_primary_output",
+				Unique:  true,
+				Columns: []*schema.Column{ActionKeysColumns[4], ActionKeysColumns[1], ActionKeysColumns[2], ActionKeysColumns[3]},
+			},
+		},
+	}
 	// ActionSummariesColumns holds the columns for the "action_summaries" table.
 	ActionSummariesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -162,6 +252,42 @@ var (
 				Columns:    []*schema.Column{ActionSummariesColumns[5]},
 				RefColumns: []*schema.Column{MetricsColumns[0]},
 				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// ActionVersionsColumns holds the columns for the "action_versions" table.
+	ActionVersionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "digest_hash", Type: field.TypeBytes},
+		{Name: "digest_size_bytes", Type: field.TypeInt64},
+		{Name: "groups", Type: field.TypeJSON, Nullable: true},
+		{Name: "first_seen_at", Type: field.TypeTime},
+		{Name: "last_seen_at", Type: field.TypeTime},
+		{Name: "action_key_id", Type: field.TypeInt64},
+	}
+	// ActionVersionsTable holds the schema information for the "action_versions" table.
+	ActionVersionsTable = &schema.Table{
+		Name:       "action_versions",
+		Columns:    ActionVersionsColumns,
+		PrimaryKey: []*schema.Column{ActionVersionsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "action_versions_action_keys_versions",
+				Columns:    []*schema.Column{ActionVersionsColumns[6]},
+				RefColumns: []*schema.Column{ActionKeysColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "actionversion_action_key_id_digest_hash_digest_size_bytes",
+				Unique:  true,
+				Columns: []*schema.Column{ActionVersionsColumns[6], ActionVersionsColumns[1], ActionVersionsColumns[2]},
+			},
+			{
+				Name:    "actionversion_last_seen_at",
+				Unique:  false,
+				Columns: []*schema.Column{ActionVersionsColumns[5]},
 			},
 		},
 	}
@@ -230,6 +356,7 @@ var (
 		{Name: "processed_event_workspace_status", Type: field.TypeBool, Default: false},
 		{Name: "authenticated_user_bazel_invocations", Type: field.TypeInt64, Nullable: true},
 		{Name: "profile_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "exec_log_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "build_invocations", Type: field.TypeInt64, Nullable: true},
 		{Name: "instance_name_bazel_invocations", Type: field.TypeInt64},
 	}
@@ -252,14 +379,20 @@ var (
 				OnDelete:   schema.SetNull,
 			},
 			{
-				Symbol:     "bazel_invocations_builds_invocations",
+				Symbol:     "bazel_invocations_files_exec_log",
 				Columns:    []*schema.Column{BazelInvocationsColumns[22]},
+				RefColumns: []*schema.Column{FilesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "bazel_invocations_builds_invocations",
+				Columns:    []*schema.Column{BazelInvocationsColumns[23]},
 				RefColumns: []*schema.Column{BuildsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "bazel_invocations_instance_names_bazel_invocations",
-				Columns:    []*schema.Column{BazelInvocationsColumns[23]},
+				Columns:    []*schema.Column{BazelInvocationsColumns[24]},
 				RefColumns: []*schema.Column{InstanceNamesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -278,12 +411,12 @@ var (
 			{
 				Name:    "bazelinvocation_build_invocations",
 				Unique:  false,
-				Columns: []*schema.Column{BazelInvocationsColumns[22]},
+				Columns: []*schema.Column{BazelInvocationsColumns[23]},
 			},
 			{
 				Name:    "bazelinvocation_instance_name_bazel_invocations",
 				Unique:  false,
-				Columns: []*schema.Column{BazelInvocationsColumns[23]},
+				Columns: []*schema.Column{BazelInvocationsColumns[24]},
 			},
 			{
 				Name:    "bazelinvocation_authenticated_user_bazel_invocations",
@@ -294,6 +427,11 @@ var (
 				Name:    "bazelinvocation_profile_id",
 				Unique:  false,
 				Columns: []*schema.Column{BazelInvocationsColumns[21]},
+			},
+			{
+				Name:    "bazelinvocation_exec_log_id",
+				Unique:  false,
+				Columns: []*schema.Column{BazelInvocationsColumns[22]},
 			},
 		},
 	}
@@ -697,6 +835,45 @@ var (
 				Name:    "eventmetadata_event_received_at",
 				Unique:  false,
 				Columns: []*schema.Column{EventMetadataColumns[2]},
+			},
+		},
+	}
+	// ExecLogSummariesColumns holds the columns for the "exec_log_summaries" table.
+	ExecLogSummariesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"PENDING", "DONE", "FAILED"}},
+		{Name: "error", Type: field.TypeString, Nullable: true},
+		{Name: "attempts", Type: field.TypeInt32, Default: 0},
+		{Name: "started_at", Type: field.TypeTime},
+		{Name: "finished_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rev2_instance_name", Type: field.TypeString, Nullable: true},
+		{Name: "digest_function", Type: field.TypeInt16, Nullable: true},
+		{Name: "spawn_count", Type: field.TypeInt64, Default: 0},
+		{Name: "cache_hits", Type: field.TypeInt64, Default: 0},
+		{Name: "executed_count", Type: field.TypeInt64, Default: 0},
+		{Name: "parse_ms", Type: field.TypeInt64, Default: 0},
+		{Name: "bytes", Type: field.TypeInt64, Default: 0},
+		{Name: "spawn_index", Type: field.TypeBytes, Nullable: true},
+		{Name: "bazel_invocation_id", Type: field.TypeInt64, Unique: true},
+	}
+	// ExecLogSummariesTable holds the schema information for the "exec_log_summaries" table.
+	ExecLogSummariesTable = &schema.Table{
+		Name:       "exec_log_summaries",
+		Columns:    ExecLogSummariesColumns,
+		PrimaryKey: []*schema.Column{ExecLogSummariesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "exec_log_summaries_bazel_invocations_exec_log_summary",
+				Columns:    []*schema.Column{ExecLogSummariesColumns[14]},
+				RefColumns: []*schema.Column{BazelInvocationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "execlogsummary_status_started_at",
+				Unique:  false,
+				Columns: []*schema.Column{ExecLogSummariesColumns[1], ExecLogSummariesColumns[4]},
 			},
 		},
 	}
@@ -1562,7 +1739,10 @@ var (
 		ActionsTable,
 		ActionCacheStatisticsTable,
 		ActionDataTable,
+		ActionExecutionsTable,
+		ActionKeysTable,
 		ActionSummariesTable,
+		ActionVersionsTable,
 		ArtifactMetricsTable,
 		AuthenticatedUsersTable,
 		BazelInvocationsTable,
@@ -1580,6 +1760,7 @@ var (
 		DynamicExecutionMetricsTable,
 		DynamicExecutionRaceStatisticsTable,
 		EventMetadataTable,
+		ExecLogSummariesTable,
 		FilesTable,
 		FilePathsTable,
 		GarbageMetricsTable,
@@ -1619,12 +1800,18 @@ func init() {
 	ActionsTable.ForeignKeys[3].RefTable = BazelInvocationsTable
 	ActionCacheStatisticsTable.ForeignKeys[0].RefTable = ActionSummariesTable
 	ActionDataTable.ForeignKeys[0].RefTable = ActionSummariesTable
+	ActionExecutionsTable.ForeignKeys[0].RefTable = ActionKeysTable
+	ActionExecutionsTable.ForeignKeys[1].RefTable = ActionVersionsTable
+	ActionExecutionsTable.ForeignKeys[2].RefTable = BazelInvocationsTable
+	ActionKeysTable.ForeignKeys[0].RefTable = InstanceNamesTable
 	ActionSummariesTable.ForeignKeys[0].RefTable = MetricsTable
+	ActionVersionsTable.ForeignKeys[0].RefTable = ActionKeysTable
 	ArtifactMetricsTable.ForeignKeys[0].RefTable = MetricsTable
 	BazelInvocationsTable.ForeignKeys[0].RefTable = AuthenticatedUsersTable
 	BazelInvocationsTable.ForeignKeys[1].RefTable = FilesTable
-	BazelInvocationsTable.ForeignKeys[2].RefTable = BuildsTable
-	BazelInvocationsTable.ForeignKeys[3].RefTable = InstanceNamesTable
+	BazelInvocationsTable.ForeignKeys[2].RefTable = FilesTable
+	BazelInvocationsTable.ForeignKeys[3].RefTable = BuildsTable
+	BazelInvocationsTable.ForeignKeys[4].RefTable = InstanceNamesTable
 	BuildsTable.ForeignKeys[0].RefTable = InstanceNamesTable
 	BuildGraphAspectCountsTable.ForeignKeys[0].RefTable = BuildGraphMetricsTable
 	BuildGraphEvaluationStatsTable.ForeignKeys[0].RefTable = BuildGraphMetricsTable
@@ -1638,6 +1825,7 @@ func init() {
 	DynamicExecutionMetricsTable.ForeignKeys[0].RefTable = MetricsTable
 	DynamicExecutionRaceStatisticsTable.ForeignKeys[0].RefTable = DynamicExecutionMetricsTable
 	EventMetadataTable.ForeignKeys[0].RefTable = BazelInvocationsTable
+	ExecLogSummariesTable.ForeignKeys[0].RefTable = BazelInvocationsTable
 	FilesTable.ForeignKeys[0].RefTable = DigestsTable
 	FilesTable.ForeignKeys[1].RefTable = FilePathsTable
 	FilePathsTable.ForeignKeys[0].RefTable = InstanceNamesTable

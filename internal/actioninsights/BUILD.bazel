@@ -1,0 +1,17 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "actioninsights",
+    srcs = ["spawnindex.go"],
+    importpath = "github.com/buildbarn/bb-portal/internal/actioninsights",
+    visibility = ["//:__subpackages__"],
+)
+
+go_test(
+    name = "actioninsights_test",
+    srcs = ["spawnindex_test.go"],
+    deps = [
+        ":actioninsights",
+        "@com_github_stretchr_testify//require",
+    ],
+)

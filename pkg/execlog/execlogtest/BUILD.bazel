@@ -1,0 +1,13 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "execlogtest",
+    srcs = ["builder.go"],
+    importpath = "github.com/buildbarn/bb-portal/pkg/execlog/execlogtest",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//pkg/proto/bazelbuild/bazel/protobuf:src_main_protobuf",
+        "@com_github_klauspost_compress//zstd",
+        "@org_golang_google_protobuf//encoding/protodelim",
+    ],
+)

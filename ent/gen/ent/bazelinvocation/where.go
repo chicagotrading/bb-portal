@@ -101,6 +101,11 @@ func ProfileID(v int64) predicate.BazelInvocation {
 	return predicate.BazelInvocation(sql.FieldEQ(FieldProfileID, v))
 }
 
+// ExecLogID applies equality check predicate on the "exec_log_id" field. It's identical to ExecLogIDEQ.
+func ExecLogID(v int64) predicate.BazelInvocation {
+	return predicate.BazelInvocation(sql.FieldEQ(FieldExecLogID, v))
+}
+
 // BazelVersion applies equality check predicate on the "bazel_version" field. It's identical to BazelVersionEQ.
 func BazelVersion(v string) predicate.BazelInvocation {
 	return predicate.BazelInvocation(sql.FieldEQ(FieldBazelVersion, v))
@@ -554,6 +559,36 @@ func ProfileIDIsNil() predicate.BazelInvocation {
 // ProfileIDNotNil applies the NotNil predicate on the "profile_id" field.
 func ProfileIDNotNil() predicate.BazelInvocation {
 	return predicate.BazelInvocation(sql.FieldNotNull(FieldProfileID))
+}
+
+// ExecLogIDEQ applies the EQ predicate on the "exec_log_id" field.
+func ExecLogIDEQ(v int64) predicate.BazelInvocation {
+	return predicate.BazelInvocation(sql.FieldEQ(FieldExecLogID, v))
+}
+
+// ExecLogIDNEQ applies the NEQ predicate on the "exec_log_id" field.
+func ExecLogIDNEQ(v int64) predicate.BazelInvocation {
+	return predicate.BazelInvocation(sql.FieldNEQ(FieldExecLogID, v))
+}
+
+// ExecLogIDIn applies the In predicate on the "exec_log_id" field.
+func ExecLogIDIn(vs ...int64) predicate.BazelInvocation {
+	return predicate.BazelInvocation(sql.FieldIn(FieldExecLogID, vs...))
+}
+
+// ExecLogIDNotIn applies the NotIn predicate on the "exec_log_id" field.
+func ExecLogIDNotIn(vs ...int64) predicate.BazelInvocation {
+	return predicate.BazelInvocation(sql.FieldNotIn(FieldExecLogID, vs...))
+}
+
+// ExecLogIDIsNil applies the IsNil predicate on the "exec_log_id" field.
+func ExecLogIDIsNil() predicate.BazelInvocation {
+	return predicate.BazelInvocation(sql.FieldIsNull(FieldExecLogID))
+}
+
+// ExecLogIDNotNil applies the NotNil predicate on the "exec_log_id" field.
+func ExecLogIDNotNil() predicate.BazelInvocation {
+	return predicate.BazelInvocation(sql.FieldNotNull(FieldExecLogID))
 }
 
 // BazelVersionEQ applies the EQ predicate on the "bazel_version" field.
@@ -1104,6 +1139,75 @@ func HasProfile() predicate.BazelInvocation {
 func HasProfileWith(preds ...predicate.File) predicate.BazelInvocation {
 	return predicate.BazelInvocation(func(s *sql.Selector) {
 		step := newProfileStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasExecLog applies the HasEdge predicate on the "exec_log" edge.
+func HasExecLog() predicate.BazelInvocation {
+	return predicate.BazelInvocation(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, ExecLogTable, ExecLogColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasExecLogWith applies the HasEdge predicate on the "exec_log" edge with a given conditions (other predicates).
+func HasExecLogWith(preds ...predicate.File) predicate.BazelInvocation {
+	return predicate.BazelInvocation(func(s *sql.Selector) {
+		step := newExecLogStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasExecLogSummary applies the HasEdge predicate on the "exec_log_summary" edge.
+func HasExecLogSummary() predicate.BazelInvocation {
+	return predicate.BazelInvocation(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, ExecLogSummaryTable, ExecLogSummaryColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasExecLogSummaryWith applies the HasEdge predicate on the "exec_log_summary" edge with a given conditions (other predicates).
+func HasExecLogSummaryWith(preds ...predicate.ExecLogSummary) predicate.BazelInvocation {
+	return predicate.BazelInvocation(func(s *sql.Selector) {
+		step := newExecLogSummaryStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasActionExecutions applies the HasEdge predicate on the "action_executions" edge.
+func HasActionExecutions() predicate.BazelInvocation {
+	return predicate.BazelInvocation(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ActionExecutionsTable, ActionExecutionsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasActionExecutionsWith applies the HasEdge predicate on the "action_executions" edge with a given conditions (other predicates).
+func HasActionExecutionsWith(preds ...predicate.ActionExecution) predicate.BazelInvocation {
+	return predicate.BazelInvocation(func(s *sql.Selector) {
+		step := newActionExecutionsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

@@ -15,7 +15,10 @@ import (
 	"github.com/buildbarn/bb-portal/ent/gen/ent/action"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/actioncachestatistics"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/actiondata"
+	"github.com/buildbarn/bb-portal/ent/gen/ent/actionexecution"
+	"github.com/buildbarn/bb-portal/ent/gen/ent/actionkey"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/actionsummary"
+	"github.com/buildbarn/bb-portal/ent/gen/ent/actionversion"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/artifactmetrics"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/authenticateduser"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/bazelinvocation"
@@ -33,6 +36,7 @@ import (
 	"github.com/buildbarn/bb-portal/ent/gen/ent/dynamicexecutionmetrics"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/dynamicexecutionracestatistic"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/eventmetadata"
+	"github.com/buildbarn/bb-portal/ent/gen/ent/execlogsummary"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/file"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/filepath"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/garbagemetrics"
@@ -125,7 +129,10 @@ func checkColumn(t, c string) error {
 			action.Table:                        action.ValidColumn,
 			actioncachestatistics.Table:         actioncachestatistics.ValidColumn,
 			actiondata.Table:                    actiondata.ValidColumn,
+			actionexecution.Table:               actionexecution.ValidColumn,
+			actionkey.Table:                     actionkey.ValidColumn,
 			actionsummary.Table:                 actionsummary.ValidColumn,
+			actionversion.Table:                 actionversion.ValidColumn,
 			artifactmetrics.Table:               artifactmetrics.ValidColumn,
 			authenticateduser.Table:             authenticateduser.ValidColumn,
 			bazelinvocation.Table:               bazelinvocation.ValidColumn,
@@ -143,6 +150,7 @@ func checkColumn(t, c string) error {
 			dynamicexecutionmetrics.Table:       dynamicexecutionmetrics.ValidColumn,
 			dynamicexecutionracestatistic.Table: dynamicexecutionracestatistic.ValidColumn,
 			eventmetadata.Table:                 eventmetadata.ValidColumn,
+			execlogsummary.Table:                execlogsummary.ValidColumn,
 			file.Table:                          file.ValidColumn,
 			filepath.Table:                      filepath.ValidColumn,
 			garbagemetrics.Table:                garbagemetrics.ValidColumn,

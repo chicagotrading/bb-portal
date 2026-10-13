@@ -27,6 +27,8 @@ const (
 	EdgeActionStderr = "action_stderr"
 	// EdgeInvocationProfile holds the string denoting the invocation_profile edge name in mutations.
 	EdgeInvocationProfile = "invocation_profile"
+	// EdgeInvocationExecLog holds the string denoting the invocation_exec_log edge name in mutations.
+	EdgeInvocationExecLog = "invocation_exec_log"
 	// EdgeTestActionOutput holds the string denoting the test_action_output edge name in mutations.
 	EdgeTestActionOutput = "test_action_output"
 	// EdgeTestActionOutputTable holds the string denoting the test_action_output_table edge name in mutations.
@@ -68,6 +70,13 @@ const (
 	InvocationProfileInverseTable = "bazel_invocations"
 	// InvocationProfileColumn is the table column denoting the invocation_profile relation/edge.
 	InvocationProfileColumn = "profile_id"
+	// InvocationExecLogTable is the table that holds the invocation_exec_log relation/edge.
+	InvocationExecLogTable = "bazel_invocations"
+	// InvocationExecLogInverseTable is the table name for the BazelInvocation entity.
+	// It exists in this package in order to avoid circular dependency with the "bazelinvocation" package.
+	InvocationExecLogInverseTable = "bazel_invocations"
+	// InvocationExecLogColumn is the table column denoting the invocation_exec_log relation/edge.
+	InvocationExecLogColumn = "exec_log_id"
 	// TestActionOutputTable is the table that holds the test_action_output relation/edge. The primary key declared below.
 	TestActionOutputTable = "test_action_outputs"
 	// TestActionOutputInverseTable is the table name for the TestResult entity.
@@ -189,6 +198,20 @@ func ByInvocationProfile(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption
 	}
 }
 
+// ByInvocationExecLogCount orders the results by invocation_exec_log count.
+func ByInvocationExecLogCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newInvocationExecLogStep(), opts...)
+	}
+}
+
+// ByInvocationExecLog orders the results by invocation_exec_log terms.
+func ByInvocationExecLog(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newInvocationExecLogStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByTestActionOutputCount orders the results by test_action_output count.
 func ByTestActionOutputCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -249,6 +272,13 @@ func newInvocationProfileStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(InvocationProfileInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, true, InvocationProfileTable, InvocationProfileColumn),
+	)
+}
+func newInvocationExecLogStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(InvocationExecLogInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, true, InvocationExecLogTable, InvocationExecLogColumn),
 	)
 }
 func newTestActionOutputStep() *sqlgraph.Step {

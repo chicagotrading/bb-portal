@@ -9,6 +9,7 @@ import (
 )
 
 type Querier interface {
+	ClaimExecLogSummary(ctx context.Context, arg ClaimExecLogSummaryParams) (ClaimExecLogSummaryRow, error)
 	//
 	// A function for creating authenticated
 	// users. It returns the ID and a bool
@@ -48,17 +49,26 @@ type Querier interface {
 	DeleteOldInvocationsFromPages(ctx context.Context, arg DeleteOldInvocationsFromPagesParams) (int64, error)
 	DeleteOrphanedTestTargetsFromPages(ctx context.Context, arg DeleteOrphanedTestTargetsFromPagesParams) (int64, error)
 	DeleteTargetKindMappingsFromPages(ctx context.Context, arg DeleteTargetKindMappingsFromPagesParams) (int64, error)
+	DeleteUnusedActionKeys(ctx context.Context, batchLimit int64) (int64, error)
+	DeleteUnusedActionVersions(ctx context.Context, arg DeleteUnusedActionVersionsParams) (int64, error)
 	DeleteUnusedDigestFromPages(ctx context.Context, arg DeleteUnusedDigestFromPagesParams) (int64, error)
 	DeleteUnusedFilePathsFromPages(ctx context.Context, arg DeleteUnusedFilePathsFromPagesParams) (int64, error)
 	DeleteUnusedFilesFromPages(ctx context.Context, arg DeleteUnusedFilesFromPagesParams) (int64, error)
 	DeleteUnusedTargetsFromPages(ctx context.Context, arg DeleteUnusedTargetsFromPagesParams) (int64, error)
+	FailAbandonedExecLogSummaries(ctx context.Context, arg FailAbandonedExecLogSummariesParams) (int64, error)
+	FindExecLogsToIngest(ctx context.Context, arg FindExecLogsToIngestParams) ([]FindExecLogsToIngestRow, error)
 	FindMappedTargets(ctx context.Context, arg FindMappedTargetsParams) ([]FindMappedTargetsRow, error)
 	FindTargets(ctx context.Context, arg FindTargetsParams) ([]FindTargetsRow, error)
+	GetActionKeyIDs(ctx context.Context, arg GetActionKeyIDsParams) ([]GetActionKeyIDsRow, error)
+	GetActionVersionIDs(ctx context.Context, arg GetActionVersionIDsParams) ([]GetActionVersionIDsRow, error)
 	GetInvocationsForLogCompactionFromPages(ctx context.Context, arg GetInvocationsForLogCompactionFromPagesParams) ([]GetInvocationsForLogCompactionFromPagesRow, error)
 	GetOrCreateEventMetadata(ctx context.Context, bazelInvocationID int64) (GetOrCreateEventMetadataRow, error)
+	InsertMissingActionKeys(ctx context.Context, arg InsertMissingActionKeysParams) error
+	InsertMissingActionVersions(ctx context.Context, arg InsertMissingActionVersionsParams) error
 	InsertMissingDigests(ctx context.Context, arg InsertMissingDigestsParams) error
 	InsertMissingFilePaths(ctx context.Context, arg InsertMissingFilePathsParams) error
 	InsertMissingFiles(ctx context.Context, arg InsertMissingFilesParams) error
+	ListActionKeyLabels(ctx context.Context, instanceNameID int64) ([]string, error)
 	LockBazelInvocationCompletion(ctx context.Context, id int64) (LockBazelInvocationCompletionRow, error)
 	LockStaleInvocationsFromPages(ctx context.Context, arg LockStaleInvocationsFromPagesParams) (int64, error)
 	SelectForeignKeysWithoutIndexes(ctx context.Context) ([]SelectForeignKeysWithoutIndexesRow, error)
@@ -66,6 +76,7 @@ type Querier interface {
 	// Returns the number of physical blocks of a table
 	SelectPages(ctx context.Context, tableName string) (int32, error)
 	SelectRedundantIndexes(ctx context.Context) ([]SelectRedundantIndexesRow, error)
+	TouchActionVersions(ctx context.Context, arg TouchActionVersionsParams) (int64, error)
 	UpdateBuildTimestampFromInvocation(ctx context.Context, invocationID int64) error
 	UpdateCompletedInvocationWithEndTimeFromEventMetadata(ctx context.Context) (int64, error)
 	UpdateEventMetadata(ctx context.Context, arg UpdateEventMetadataParams) (int64, error)

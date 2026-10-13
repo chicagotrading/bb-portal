@@ -18,6 +18,7 @@ import (
 	"github.com/buildbarn/bb-portal/internal/database"
 	"github.com/buildbarn/bb-portal/internal/database/common"
 	"github.com/buildbarn/bb-portal/internal/database/dbcleanupservice"
+	"github.com/buildbarn/bb-portal/internal/database/execlogingest"
 	"github.com/buildbarn/bb-portal/pkg/frontend"
 	"github.com/buildbarn/bb-portal/pkg/grpcweb/blobstoreservice"
 	"github.com/buildbarn/bb-portal/pkg/grpcweb/schedulerservice"
@@ -29,6 +30,7 @@ import (
 	"github.com/buildbarn/bb-storage/pkg/blobstore/chunk"
 	blobstore_configuration "github.com/buildbarn/bb-storage/pkg/blobstore/configuration"
 	"github.com/buildbarn/bb-storage/pkg/capabilities"
+	"github.com/buildbarn/bb-storage/pkg/cas"
 	"github.com/buildbarn/bb-storage/pkg/cas/reader"
 	"github.com/buildbarn/bb-storage/pkg/clock"
 	"github.com/buildbarn/bb-storage/pkg/digest"
@@ -131,6 +133,25 @@ func main() {
 		)
 		if err != nil {
 			return util.StatusWrap(err, "Failed to create Blob Access")
+		}
+
+		// Configure the execution log ingestion, if configured
+		var execLogIngestService *execlogingest.Service
+		if configuration.ExecLogIngestServiceConfiguration != nil {
+			var casReader cas.StreamReader
+			if c := blobAccess.ContentAddressableStorage; c != nil {
+				casReader = execlogingest.NewCASReader(c.UnauthorizedChunkStorage, c.UnauthorizedChunkMappingStorage, c.CdcParametersFetcher)
+			}
+			if execLogIngestService, err = execlogingest.NewService(
+				dbClient,
+				casReader,
+				clock.SystemClock,
+				configuration.ExecLogIngestServiceConfiguration,
+				configuration.GetDatabase().GetCleanupConfiguration().GetInvocationRetention().AsDuration(),
+				tracerProvider,
+			); err != nil {
+				return util.StatusWrap(err, "Failed to create execution log ingestion service")
+			}
 		}
 
 		// Setup http router, if configured
@@ -240,6 +261,10 @@ func main() {
 		// in the middle of the first cleanup.
 		if dbCleanupService != nil {
 			dbCleanupService.StartDbCleanupService(ctx, dependenciesGroup)
+		}
+
+		if execLogIngestService != nil {
+			execLogIngestService.Start(dependenciesGroup)
 		}
 
 		lifecycleState.MarkReadyAndWait(siblingsGroup)

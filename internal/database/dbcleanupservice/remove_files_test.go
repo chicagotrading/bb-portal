@@ -61,10 +61,12 @@ func TestRemoveFiles(t *testing.T) {
 		require.NoError(t, err)
 		f4, err := buildeventrecorder.SaveSingleFile(ctx, db, instanceName.ID, files.ParsedBepFile{Path: "4", InstanceName: "4", DigestFunction: 4, Hash: []byte{4}, SizeBytes: 4})
 		require.NoError(t, err)
-		_, err = buildeventrecorder.SaveSingleFile(ctx, db, instanceName.ID, files.ParsedBepFile{Path: "5", InstanceName: "5", DigestFunction: 5, Hash: []byte{5}, SizeBytes: 5})
+		f5, err := buildeventrecorder.SaveSingleFile(ctx, db, instanceName.ID, files.ParsedBepFile{Path: "5", InstanceName: "5", DigestFunction: 5, Hash: []byte{5}, SizeBytes: 5})
+		require.NoError(t, err)
+		_, err = buildeventrecorder.SaveSingleFile(ctx, db, instanceName.ID, files.ParsedBepFile{Path: "6", InstanceName: "6", DigestFunction: 6, Hash: []byte{6}, SizeBytes: 6})
 		require.NoError(t, err)
 
-		inv := testutils.StartCreateInvocation(client, instanceName).SetProfileID(f1).SaveX(ctx)
+		inv := testutils.StartCreateInvocation(client, instanceName).SetProfileID(f1).SetExecLogID(f5).SaveX(ctx)
 		conf := client.Configuration.Create().SetConfigurationID("1").SetBazelInvocation(inv).SaveX(ctx)
 		client.Action.Create().SetBazelInvocation(inv).SetConfiguration(conf).SetLabel("foo").SetStdoutID(f2).SetStderrID(f3).SaveX(ctx)
 
@@ -93,12 +95,12 @@ func TestRemoveFiles(t *testing.T) {
 
 		count, err := client.File.Query().Count(ctx)
 		require.NoError(t, err)
-		require.Equal(t, 4, count)
+		require.Equal(t, 5, count)
 		count, err = client.FilePath.Query().Count(ctx)
 		require.NoError(t, err)
-		require.Equal(t, 4, count)
+		require.Equal(t, 5, count)
 		count, err = client.Digest.Query().Count(ctx)
 		require.NoError(t, err)
-		require.Equal(t, 4, count)
+		require.Equal(t, 5, count)
 	})
 }

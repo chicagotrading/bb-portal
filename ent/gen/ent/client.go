@@ -18,7 +18,10 @@ import (
 	"github.com/buildbarn/bb-portal/ent/gen/ent/action"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/actioncachestatistics"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/actiondata"
+	"github.com/buildbarn/bb-portal/ent/gen/ent/actionexecution"
+	"github.com/buildbarn/bb-portal/ent/gen/ent/actionkey"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/actionsummary"
+	"github.com/buildbarn/bb-portal/ent/gen/ent/actionversion"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/artifactmetrics"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/authenticateduser"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/bazelinvocation"
@@ -36,6 +39,7 @@ import (
 	"github.com/buildbarn/bb-portal/ent/gen/ent/dynamicexecutionmetrics"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/dynamicexecutionracestatistic"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/eventmetadata"
+	"github.com/buildbarn/bb-portal/ent/gen/ent/execlogsummary"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/file"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/filepath"
 	"github.com/buildbarn/bb-portal/ent/gen/ent/garbagemetrics"
@@ -80,8 +84,14 @@ type Client struct {
 	ActionCacheStatistics *ActionCacheStatisticsClient
 	// ActionData is the client for interacting with the ActionData builders.
 	ActionData *ActionDataClient
+	// ActionExecution is the client for interacting with the ActionExecution builders.
+	ActionExecution *ActionExecutionClient
+	// ActionKey is the client for interacting with the ActionKey builders.
+	ActionKey *ActionKeyClient
 	// ActionSummary is the client for interacting with the ActionSummary builders.
 	ActionSummary *ActionSummaryClient
+	// ActionVersion is the client for interacting with the ActionVersion builders.
+	ActionVersion *ActionVersionClient
 	// ArtifactMetrics is the client for interacting with the ArtifactMetrics builders.
 	ArtifactMetrics *ArtifactMetricsClient
 	// AuthenticatedUser is the client for interacting with the AuthenticatedUser builders.
@@ -116,6 +126,8 @@ type Client struct {
 	DynamicExecutionRaceStatistic *DynamicExecutionRaceStatisticClient
 	// EventMetadata is the client for interacting with the EventMetadata builders.
 	EventMetadata *EventMetadataClient
+	// ExecLogSummary is the client for interacting with the ExecLogSummary builders.
+	ExecLogSummary *ExecLogSummaryClient
 	// File is the client for interacting with the File builders.
 	File *FileClient
 	// FilePath is the client for interacting with the FilePath builders.
@@ -190,7 +202,10 @@ func (c *Client) init() {
 	c.Action = NewActionClient(c.config)
 	c.ActionCacheStatistics = NewActionCacheStatisticsClient(c.config)
 	c.ActionData = NewActionDataClient(c.config)
+	c.ActionExecution = NewActionExecutionClient(c.config)
+	c.ActionKey = NewActionKeyClient(c.config)
 	c.ActionSummary = NewActionSummaryClient(c.config)
+	c.ActionVersion = NewActionVersionClient(c.config)
 	c.ArtifactMetrics = NewArtifactMetricsClient(c.config)
 	c.AuthenticatedUser = NewAuthenticatedUserClient(c.config)
 	c.BazelInvocation = NewBazelInvocationClient(c.config)
@@ -208,6 +223,7 @@ func (c *Client) init() {
 	c.DynamicExecutionMetrics = NewDynamicExecutionMetricsClient(c.config)
 	c.DynamicExecutionRaceStatistic = NewDynamicExecutionRaceStatisticClient(c.config)
 	c.EventMetadata = NewEventMetadataClient(c.config)
+	c.ExecLogSummary = NewExecLogSummaryClient(c.config)
 	c.File = NewFileClient(c.config)
 	c.FilePath = NewFilePathClient(c.config)
 	c.GarbageMetrics = NewGarbageMetricsClient(c.config)
@@ -332,7 +348,10 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Action:                        NewActionClient(cfg),
 		ActionCacheStatistics:         NewActionCacheStatisticsClient(cfg),
 		ActionData:                    NewActionDataClient(cfg),
+		ActionExecution:               NewActionExecutionClient(cfg),
+		ActionKey:                     NewActionKeyClient(cfg),
 		ActionSummary:                 NewActionSummaryClient(cfg),
+		ActionVersion:                 NewActionVersionClient(cfg),
 		ArtifactMetrics:               NewArtifactMetricsClient(cfg),
 		AuthenticatedUser:             NewAuthenticatedUserClient(cfg),
 		BazelInvocation:               NewBazelInvocationClient(cfg),
@@ -350,6 +369,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		DynamicExecutionMetrics:       NewDynamicExecutionMetricsClient(cfg),
 		DynamicExecutionRaceStatistic: NewDynamicExecutionRaceStatisticClient(cfg),
 		EventMetadata:                 NewEventMetadataClient(cfg),
+		ExecLogSummary:                NewExecLogSummaryClient(cfg),
 		File:                          NewFileClient(cfg),
 		FilePath:                      NewFilePathClient(cfg),
 		GarbageMetrics:                NewGarbageMetricsClient(cfg),
@@ -401,7 +421,10 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Action:                        NewActionClient(cfg),
 		ActionCacheStatistics:         NewActionCacheStatisticsClient(cfg),
 		ActionData:                    NewActionDataClient(cfg),
+		ActionExecution:               NewActionExecutionClient(cfg),
+		ActionKey:                     NewActionKeyClient(cfg),
 		ActionSummary:                 NewActionSummaryClient(cfg),
+		ActionVersion:                 NewActionVersionClient(cfg),
 		ArtifactMetrics:               NewArtifactMetricsClient(cfg),
 		AuthenticatedUser:             NewAuthenticatedUserClient(cfg),
 		BazelInvocation:               NewBazelInvocationClient(cfg),
@@ -419,6 +442,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		DynamicExecutionMetrics:       NewDynamicExecutionMetricsClient(cfg),
 		DynamicExecutionRaceStatistic: NewDynamicExecutionRaceStatisticClient(cfg),
 		EventMetadata:                 NewEventMetadataClient(cfg),
+		ExecLogSummary:                NewExecLogSummaryClient(cfg),
 		File:                          NewFileClient(cfg),
 		FilePath:                      NewFilePathClient(cfg),
 		GarbageMetrics:                NewGarbageMetricsClient(cfg),
@@ -477,19 +501,20 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Action, c.ActionCacheStatistics, c.ActionData, c.ActionSummary,
-		c.ArtifactMetrics, c.AuthenticatedUser, c.BazelInvocation, c.Build,
-		c.BuildGraphAspectCount, c.BuildGraphEvaluationStat, c.BuildGraphMetrics,
-		c.BuildGraphRuleClassCount, c.BuildLogChunk, c.BuildTag, c.Configuration,
-		c.ConnectionMetadata, c.CumulativeMetrics, c.Digest, c.DynamicExecutionMetrics,
-		c.DynamicExecutionRaceStatistic, c.EventMetadata, c.File, c.FilePath,
-		c.GarbageMetrics, c.IncompleteBuildLog, c.InstanceName, c.InvocationTag,
-		c.InvocationTarget, c.MemoryMetrics, c.Metrics, c.MissDetail, c.NetworkMetrics,
-		c.PackageLoadMetrics, c.PackageMetrics, c.RunnerCount, c.SourceControl,
-		c.SystemNetworkStats, c.Target, c.TargetKindMapping, c.TargetMetrics,
-		c.TestActionOutput, c.TestResult, c.TestSummary, c.TestTarget, c.TimingMetrics,
-		c.WorkerID, c.WorkerMetrics, c.WorkerPoolMetrics, c.WorkerPoolStats,
-		c.WorkerStats,
+		c.Action, c.ActionCacheStatistics, c.ActionData, c.ActionExecution, c.ActionKey,
+		c.ActionSummary, c.ActionVersion, c.ArtifactMetrics, c.AuthenticatedUser,
+		c.BazelInvocation, c.Build, c.BuildGraphAspectCount,
+		c.BuildGraphEvaluationStat, c.BuildGraphMetrics, c.BuildGraphRuleClassCount,
+		c.BuildLogChunk, c.BuildTag, c.Configuration, c.ConnectionMetadata,
+		c.CumulativeMetrics, c.Digest, c.DynamicExecutionMetrics,
+		c.DynamicExecutionRaceStatistic, c.EventMetadata, c.ExecLogSummary, c.File,
+		c.FilePath, c.GarbageMetrics, c.IncompleteBuildLog, c.InstanceName,
+		c.InvocationTag, c.InvocationTarget, c.MemoryMetrics, c.Metrics, c.MissDetail,
+		c.NetworkMetrics, c.PackageLoadMetrics, c.PackageMetrics, c.RunnerCount,
+		c.SourceControl, c.SystemNetworkStats, c.Target, c.TargetKindMapping,
+		c.TargetMetrics, c.TestActionOutput, c.TestResult, c.TestSummary, c.TestTarget,
+		c.TimingMetrics, c.WorkerID, c.WorkerMetrics, c.WorkerPoolMetrics,
+		c.WorkerPoolStats, c.WorkerStats,
 	} {
 		n.Use(hooks...)
 	}
@@ -499,19 +524,20 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Action, c.ActionCacheStatistics, c.ActionData, c.ActionSummary,
-		c.ArtifactMetrics, c.AuthenticatedUser, c.BazelInvocation, c.Build,
-		c.BuildGraphAspectCount, c.BuildGraphEvaluationStat, c.BuildGraphMetrics,
-		c.BuildGraphRuleClassCount, c.BuildLogChunk, c.BuildTag, c.Configuration,
-		c.ConnectionMetadata, c.CumulativeMetrics, c.Digest, c.DynamicExecutionMetrics,
-		c.DynamicExecutionRaceStatistic, c.EventMetadata, c.File, c.FilePath,
-		c.GarbageMetrics, c.IncompleteBuildLog, c.InstanceName, c.InvocationTag,
-		c.InvocationTarget, c.MemoryMetrics, c.Metrics, c.MissDetail, c.NetworkMetrics,
-		c.PackageLoadMetrics, c.PackageMetrics, c.RunnerCount, c.SourceControl,
-		c.SystemNetworkStats, c.Target, c.TargetKindMapping, c.TargetMetrics,
-		c.TestActionOutput, c.TestResult, c.TestSummary, c.TestTarget, c.TimingMetrics,
-		c.WorkerID, c.WorkerMetrics, c.WorkerPoolMetrics, c.WorkerPoolStats,
-		c.WorkerStats,
+		c.Action, c.ActionCacheStatistics, c.ActionData, c.ActionExecution, c.ActionKey,
+		c.ActionSummary, c.ActionVersion, c.ArtifactMetrics, c.AuthenticatedUser,
+		c.BazelInvocation, c.Build, c.BuildGraphAspectCount,
+		c.BuildGraphEvaluationStat, c.BuildGraphMetrics, c.BuildGraphRuleClassCount,
+		c.BuildLogChunk, c.BuildTag, c.Configuration, c.ConnectionMetadata,
+		c.CumulativeMetrics, c.Digest, c.DynamicExecutionMetrics,
+		c.DynamicExecutionRaceStatistic, c.EventMetadata, c.ExecLogSummary, c.File,
+		c.FilePath, c.GarbageMetrics, c.IncompleteBuildLog, c.InstanceName,
+		c.InvocationTag, c.InvocationTarget, c.MemoryMetrics, c.Metrics, c.MissDetail,
+		c.NetworkMetrics, c.PackageLoadMetrics, c.PackageMetrics, c.RunnerCount,
+		c.SourceControl, c.SystemNetworkStats, c.Target, c.TargetKindMapping,
+		c.TargetMetrics, c.TestActionOutput, c.TestResult, c.TestSummary, c.TestTarget,
+		c.TimingMetrics, c.WorkerID, c.WorkerMetrics, c.WorkerPoolMetrics,
+		c.WorkerPoolStats, c.WorkerStats,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -526,8 +552,14 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.ActionCacheStatistics.mutate(ctx, m)
 	case *ActionDataMutation:
 		return c.ActionData.mutate(ctx, m)
+	case *ActionExecutionMutation:
+		return c.ActionExecution.mutate(ctx, m)
+	case *ActionKeyMutation:
+		return c.ActionKey.mutate(ctx, m)
 	case *ActionSummaryMutation:
 		return c.ActionSummary.mutate(ctx, m)
+	case *ActionVersionMutation:
+		return c.ActionVersion.mutate(ctx, m)
 	case *ArtifactMetricsMutation:
 		return c.ArtifactMetrics.mutate(ctx, m)
 	case *AuthenticatedUserMutation:
@@ -562,6 +594,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.DynamicExecutionRaceStatistic.mutate(ctx, m)
 	case *EventMetadataMutation:
 		return c.EventMetadata.mutate(ctx, m)
+	case *ExecLogSummaryMutation:
+		return c.ExecLogSummary.mutate(ctx, m)
 	case *FileMutation:
 		return c.File.mutate(ctx, m)
 	case *FilePathMutation:
@@ -1136,6 +1170,370 @@ func (c *ActionDataClient) mutate(ctx context.Context, m *ActionDataMutation) (V
 	}
 }
 
+// ActionExecutionClient is a client for the ActionExecution schema.
+type ActionExecutionClient struct {
+	config
+}
+
+// NewActionExecutionClient returns a client for the ActionExecution from the given config.
+func NewActionExecutionClient(c config) *ActionExecutionClient {
+	return &ActionExecutionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `actionexecution.Hooks(f(g(h())))`.
+func (c *ActionExecutionClient) Use(hooks ...Hook) {
+	c.hooks.ActionExecution = append(c.hooks.ActionExecution, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `actionexecution.Intercept(f(g(h())))`.
+func (c *ActionExecutionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ActionExecution = append(c.inters.ActionExecution, interceptors...)
+}
+
+// Create returns a builder for creating a ActionExecution entity.
+func (c *ActionExecutionClient) Create() *ActionExecutionCreate {
+	mutation := newActionExecutionMutation(c.config, OpCreate)
+	return &ActionExecutionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ActionExecution entities.
+func (c *ActionExecutionClient) CreateBulk(builders ...*ActionExecutionCreate) *ActionExecutionCreateBulk {
+	return &ActionExecutionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ActionExecutionClient) MapCreateBulk(slice any, setFunc func(*ActionExecutionCreate, int)) *ActionExecutionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ActionExecutionCreateBulk{err: fmt.Errorf("calling to ActionExecutionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ActionExecutionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ActionExecutionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ActionExecution.
+func (c *ActionExecutionClient) Update() *ActionExecutionUpdate {
+	mutation := newActionExecutionMutation(c.config, OpUpdate)
+	return &ActionExecutionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ActionExecutionClient) UpdateOne(_m *ActionExecution) *ActionExecutionUpdateOne {
+	mutation := newActionExecutionMutation(c.config, OpUpdateOne, withActionExecution(_m))
+	return &ActionExecutionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ActionExecutionClient) UpdateOneID(id int64) *ActionExecutionUpdateOne {
+	mutation := newActionExecutionMutation(c.config, OpUpdateOne, withActionExecutionID(id))
+	return &ActionExecutionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ActionExecution.
+func (c *ActionExecutionClient) Delete() *ActionExecutionDelete {
+	mutation := newActionExecutionMutation(c.config, OpDelete)
+	return &ActionExecutionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ActionExecutionClient) DeleteOne(_m *ActionExecution) *ActionExecutionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ActionExecutionClient) DeleteOneID(id int64) *ActionExecutionDeleteOne {
+	builder := c.Delete().Where(actionexecution.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ActionExecutionDeleteOne{builder}
+}
+
+// Query returns a query builder for ActionExecution.
+func (c *ActionExecutionClient) Query() *ActionExecutionQuery {
+	return &ActionExecutionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeActionExecution},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ActionExecution entity by its id.
+func (c *ActionExecutionClient) Get(ctx context.Context, id int64) (*ActionExecution, error) {
+	return c.Query().Where(actionexecution.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ActionExecutionClient) GetX(ctx context.Context, id int64) *ActionExecution {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryBazelInvocation queries the bazel_invocation edge of a ActionExecution.
+func (c *ActionExecutionClient) QueryBazelInvocation(_m *ActionExecution) *BazelInvocationQuery {
+	query := (&BazelInvocationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(actionexecution.Table, actionexecution.FieldID, id),
+			sqlgraph.To(bazelinvocation.Table, bazelinvocation.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, actionexecution.BazelInvocationTable, actionexecution.BazelInvocationColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryActionKey queries the action_key edge of a ActionExecution.
+func (c *ActionExecutionClient) QueryActionKey(_m *ActionExecution) *ActionKeyQuery {
+	query := (&ActionKeyClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(actionexecution.Table, actionexecution.FieldID, id),
+			sqlgraph.To(actionkey.Table, actionkey.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, actionexecution.ActionKeyTable, actionexecution.ActionKeyColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryActionVersion queries the action_version edge of a ActionExecution.
+func (c *ActionExecutionClient) QueryActionVersion(_m *ActionExecution) *ActionVersionQuery {
+	query := (&ActionVersionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(actionexecution.Table, actionexecution.FieldID, id),
+			sqlgraph.To(actionversion.Table, actionversion.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, actionexecution.ActionVersionTable, actionexecution.ActionVersionColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ActionExecutionClient) Hooks() []Hook {
+	hooks := c.hooks.ActionExecution
+	return append(hooks[:len(hooks):len(hooks)], actionexecution.Hooks[:]...)
+}
+
+// Interceptors returns the client interceptors.
+func (c *ActionExecutionClient) Interceptors() []Interceptor {
+	return c.inters.ActionExecution
+}
+
+func (c *ActionExecutionClient) mutate(ctx context.Context, m *ActionExecutionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ActionExecutionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ActionExecutionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ActionExecutionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ActionExecutionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ActionExecution mutation op: %q", m.Op())
+	}
+}
+
+// ActionKeyClient is a client for the ActionKey schema.
+type ActionKeyClient struct {
+	config
+}
+
+// NewActionKeyClient returns a client for the ActionKey from the given config.
+func NewActionKeyClient(c config) *ActionKeyClient {
+	return &ActionKeyClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `actionkey.Hooks(f(g(h())))`.
+func (c *ActionKeyClient) Use(hooks ...Hook) {
+	c.hooks.ActionKey = append(c.hooks.ActionKey, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `actionkey.Intercept(f(g(h())))`.
+func (c *ActionKeyClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ActionKey = append(c.inters.ActionKey, interceptors...)
+}
+
+// Create returns a builder for creating a ActionKey entity.
+func (c *ActionKeyClient) Create() *ActionKeyCreate {
+	mutation := newActionKeyMutation(c.config, OpCreate)
+	return &ActionKeyCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ActionKey entities.
+func (c *ActionKeyClient) CreateBulk(builders ...*ActionKeyCreate) *ActionKeyCreateBulk {
+	return &ActionKeyCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ActionKeyClient) MapCreateBulk(slice any, setFunc func(*ActionKeyCreate, int)) *ActionKeyCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ActionKeyCreateBulk{err: fmt.Errorf("calling to ActionKeyClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ActionKeyCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ActionKeyCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ActionKey.
+func (c *ActionKeyClient) Update() *ActionKeyUpdate {
+	mutation := newActionKeyMutation(c.config, OpUpdate)
+	return &ActionKeyUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ActionKeyClient) UpdateOne(_m *ActionKey) *ActionKeyUpdateOne {
+	mutation := newActionKeyMutation(c.config, OpUpdateOne, withActionKey(_m))
+	return &ActionKeyUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ActionKeyClient) UpdateOneID(id int64) *ActionKeyUpdateOne {
+	mutation := newActionKeyMutation(c.config, OpUpdateOne, withActionKeyID(id))
+	return &ActionKeyUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ActionKey.
+func (c *ActionKeyClient) Delete() *ActionKeyDelete {
+	mutation := newActionKeyMutation(c.config, OpDelete)
+	return &ActionKeyDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ActionKeyClient) DeleteOne(_m *ActionKey) *ActionKeyDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ActionKeyClient) DeleteOneID(id int64) *ActionKeyDeleteOne {
+	builder := c.Delete().Where(actionkey.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ActionKeyDeleteOne{builder}
+}
+
+// Query returns a query builder for ActionKey.
+func (c *ActionKeyClient) Query() *ActionKeyQuery {
+	return &ActionKeyQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeActionKey},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ActionKey entity by its id.
+func (c *ActionKeyClient) Get(ctx context.Context, id int64) (*ActionKey, error) {
+	return c.Query().Where(actionkey.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ActionKeyClient) GetX(ctx context.Context, id int64) *ActionKey {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryInstanceName queries the instance_name edge of a ActionKey.
+func (c *ActionKeyClient) QueryInstanceName(_m *ActionKey) *InstanceNameQuery {
+	query := (&InstanceNameClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(actionkey.Table, actionkey.FieldID, id),
+			sqlgraph.To(instancename.Table, instancename.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, actionkey.InstanceNameTable, actionkey.InstanceNameColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryVersions queries the versions edge of a ActionKey.
+func (c *ActionKeyClient) QueryVersions(_m *ActionKey) *ActionVersionQuery {
+	query := (&ActionVersionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(actionkey.Table, actionkey.FieldID, id),
+			sqlgraph.To(actionversion.Table, actionversion.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, actionkey.VersionsTable, actionkey.VersionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryExecutions queries the executions edge of a ActionKey.
+func (c *ActionKeyClient) QueryExecutions(_m *ActionKey) *ActionExecutionQuery {
+	query := (&ActionExecutionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(actionkey.Table, actionkey.FieldID, id),
+			sqlgraph.To(actionexecution.Table, actionexecution.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, actionkey.ExecutionsTable, actionkey.ExecutionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ActionKeyClient) Hooks() []Hook {
+	hooks := c.hooks.ActionKey
+	return append(hooks[:len(hooks):len(hooks)], actionkey.Hooks[:]...)
+}
+
+// Interceptors returns the client interceptors.
+func (c *ActionKeyClient) Interceptors() []Interceptor {
+	return c.inters.ActionKey
+}
+
+func (c *ActionKeyClient) mutate(ctx context.Context, m *ActionKeyMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ActionKeyCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ActionKeyUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ActionKeyUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ActionKeyDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ActionKey mutation op: %q", m.Op())
+	}
+}
+
 // ActionSummaryClient is a client for the ActionSummary schema.
 type ActionSummaryClient struct {
 	config
@@ -1330,6 +1728,172 @@ func (c *ActionSummaryClient) mutate(ctx context.Context, m *ActionSummaryMutati
 		return (&ActionSummaryDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown ActionSummary mutation op: %q", m.Op())
+	}
+}
+
+// ActionVersionClient is a client for the ActionVersion schema.
+type ActionVersionClient struct {
+	config
+}
+
+// NewActionVersionClient returns a client for the ActionVersion from the given config.
+func NewActionVersionClient(c config) *ActionVersionClient {
+	return &ActionVersionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `actionversion.Hooks(f(g(h())))`.
+func (c *ActionVersionClient) Use(hooks ...Hook) {
+	c.hooks.ActionVersion = append(c.hooks.ActionVersion, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `actionversion.Intercept(f(g(h())))`.
+func (c *ActionVersionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ActionVersion = append(c.inters.ActionVersion, interceptors...)
+}
+
+// Create returns a builder for creating a ActionVersion entity.
+func (c *ActionVersionClient) Create() *ActionVersionCreate {
+	mutation := newActionVersionMutation(c.config, OpCreate)
+	return &ActionVersionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ActionVersion entities.
+func (c *ActionVersionClient) CreateBulk(builders ...*ActionVersionCreate) *ActionVersionCreateBulk {
+	return &ActionVersionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ActionVersionClient) MapCreateBulk(slice any, setFunc func(*ActionVersionCreate, int)) *ActionVersionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ActionVersionCreateBulk{err: fmt.Errorf("calling to ActionVersionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ActionVersionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ActionVersionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ActionVersion.
+func (c *ActionVersionClient) Update() *ActionVersionUpdate {
+	mutation := newActionVersionMutation(c.config, OpUpdate)
+	return &ActionVersionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ActionVersionClient) UpdateOne(_m *ActionVersion) *ActionVersionUpdateOne {
+	mutation := newActionVersionMutation(c.config, OpUpdateOne, withActionVersion(_m))
+	return &ActionVersionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ActionVersionClient) UpdateOneID(id int64) *ActionVersionUpdateOne {
+	mutation := newActionVersionMutation(c.config, OpUpdateOne, withActionVersionID(id))
+	return &ActionVersionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ActionVersion.
+func (c *ActionVersionClient) Delete() *ActionVersionDelete {
+	mutation := newActionVersionMutation(c.config, OpDelete)
+	return &ActionVersionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ActionVersionClient) DeleteOne(_m *ActionVersion) *ActionVersionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ActionVersionClient) DeleteOneID(id int64) *ActionVersionDeleteOne {
+	builder := c.Delete().Where(actionversion.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ActionVersionDeleteOne{builder}
+}
+
+// Query returns a query builder for ActionVersion.
+func (c *ActionVersionClient) Query() *ActionVersionQuery {
+	return &ActionVersionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeActionVersion},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ActionVersion entity by its id.
+func (c *ActionVersionClient) Get(ctx context.Context, id int64) (*ActionVersion, error) {
+	return c.Query().Where(actionversion.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ActionVersionClient) GetX(ctx context.Context, id int64) *ActionVersion {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryActionKey queries the action_key edge of a ActionVersion.
+func (c *ActionVersionClient) QueryActionKey(_m *ActionVersion) *ActionKeyQuery {
+	query := (&ActionKeyClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(actionversion.Table, actionversion.FieldID, id),
+			sqlgraph.To(actionkey.Table, actionkey.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, actionversion.ActionKeyTable, actionversion.ActionKeyColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryExecutions queries the executions edge of a ActionVersion.
+func (c *ActionVersionClient) QueryExecutions(_m *ActionVersion) *ActionExecutionQuery {
+	query := (&ActionExecutionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(actionversion.Table, actionversion.FieldID, id),
+			sqlgraph.To(actionexecution.Table, actionexecution.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, actionversion.ExecutionsTable, actionversion.ExecutionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ActionVersionClient) Hooks() []Hook {
+	hooks := c.hooks.ActionVersion
+	return append(hooks[:len(hooks):len(hooks)], actionversion.Hooks[:]...)
+}
+
+// Interceptors returns the client interceptors.
+func (c *ActionVersionClient) Interceptors() []Interceptor {
+	return c.inters.ActionVersion
+}
+
+func (c *ActionVersionClient) mutate(ctx context.Context, m *ActionVersionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ActionVersionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ActionVersionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ActionVersionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ActionVersionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ActionVersion mutation op: %q", m.Op())
 	}
 }
 
@@ -1925,6 +2489,54 @@ func (c *BazelInvocationClient) QueryProfile(_m *BazelInvocation) *FileQuery {
 			sqlgraph.From(bazelinvocation.Table, bazelinvocation.FieldID, id),
 			sqlgraph.To(file.Table, file.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, bazelinvocation.ProfileTable, bazelinvocation.ProfileColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryExecLog queries the exec_log edge of a BazelInvocation.
+func (c *BazelInvocationClient) QueryExecLog(_m *BazelInvocation) *FileQuery {
+	query := (&FileClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(bazelinvocation.Table, bazelinvocation.FieldID, id),
+			sqlgraph.To(file.Table, file.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, bazelinvocation.ExecLogTable, bazelinvocation.ExecLogColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryExecLogSummary queries the exec_log_summary edge of a BazelInvocation.
+func (c *BazelInvocationClient) QueryExecLogSummary(_m *BazelInvocation) *ExecLogSummaryQuery {
+	query := (&ExecLogSummaryClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(bazelinvocation.Table, bazelinvocation.FieldID, id),
+			sqlgraph.To(execlogsummary.Table, execlogsummary.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, bazelinvocation.ExecLogSummaryTable, bazelinvocation.ExecLogSummaryColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryActionExecutions queries the action_executions edge of a BazelInvocation.
+func (c *BazelInvocationClient) QueryActionExecutions(_m *BazelInvocation) *ActionExecutionQuery {
+	query := (&ActionExecutionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(bazelinvocation.Table, bazelinvocation.FieldID, id),
+			sqlgraph.To(actionexecution.Table, actionexecution.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, bazelinvocation.ActionExecutionsTable, bazelinvocation.ActionExecutionsColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -4221,6 +4833,156 @@ func (c *EventMetadataClient) mutate(ctx context.Context, m *EventMetadataMutati
 	}
 }
 
+// ExecLogSummaryClient is a client for the ExecLogSummary schema.
+type ExecLogSummaryClient struct {
+	config
+}
+
+// NewExecLogSummaryClient returns a client for the ExecLogSummary from the given config.
+func NewExecLogSummaryClient(c config) *ExecLogSummaryClient {
+	return &ExecLogSummaryClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `execlogsummary.Hooks(f(g(h())))`.
+func (c *ExecLogSummaryClient) Use(hooks ...Hook) {
+	c.hooks.ExecLogSummary = append(c.hooks.ExecLogSummary, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `execlogsummary.Intercept(f(g(h())))`.
+func (c *ExecLogSummaryClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ExecLogSummary = append(c.inters.ExecLogSummary, interceptors...)
+}
+
+// Create returns a builder for creating a ExecLogSummary entity.
+func (c *ExecLogSummaryClient) Create() *ExecLogSummaryCreate {
+	mutation := newExecLogSummaryMutation(c.config, OpCreate)
+	return &ExecLogSummaryCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ExecLogSummary entities.
+func (c *ExecLogSummaryClient) CreateBulk(builders ...*ExecLogSummaryCreate) *ExecLogSummaryCreateBulk {
+	return &ExecLogSummaryCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ExecLogSummaryClient) MapCreateBulk(slice any, setFunc func(*ExecLogSummaryCreate, int)) *ExecLogSummaryCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ExecLogSummaryCreateBulk{err: fmt.Errorf("calling to ExecLogSummaryClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ExecLogSummaryCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ExecLogSummaryCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ExecLogSummary.
+func (c *ExecLogSummaryClient) Update() *ExecLogSummaryUpdate {
+	mutation := newExecLogSummaryMutation(c.config, OpUpdate)
+	return &ExecLogSummaryUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ExecLogSummaryClient) UpdateOne(_m *ExecLogSummary) *ExecLogSummaryUpdateOne {
+	mutation := newExecLogSummaryMutation(c.config, OpUpdateOne, withExecLogSummary(_m))
+	return &ExecLogSummaryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ExecLogSummaryClient) UpdateOneID(id int64) *ExecLogSummaryUpdateOne {
+	mutation := newExecLogSummaryMutation(c.config, OpUpdateOne, withExecLogSummaryID(id))
+	return &ExecLogSummaryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ExecLogSummary.
+func (c *ExecLogSummaryClient) Delete() *ExecLogSummaryDelete {
+	mutation := newExecLogSummaryMutation(c.config, OpDelete)
+	return &ExecLogSummaryDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ExecLogSummaryClient) DeleteOne(_m *ExecLogSummary) *ExecLogSummaryDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ExecLogSummaryClient) DeleteOneID(id int64) *ExecLogSummaryDeleteOne {
+	builder := c.Delete().Where(execlogsummary.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ExecLogSummaryDeleteOne{builder}
+}
+
+// Query returns a query builder for ExecLogSummary.
+func (c *ExecLogSummaryClient) Query() *ExecLogSummaryQuery {
+	return &ExecLogSummaryQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeExecLogSummary},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ExecLogSummary entity by its id.
+func (c *ExecLogSummaryClient) Get(ctx context.Context, id int64) (*ExecLogSummary, error) {
+	return c.Query().Where(execlogsummary.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ExecLogSummaryClient) GetX(ctx context.Context, id int64) *ExecLogSummary {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryBazelInvocation queries the bazel_invocation edge of a ExecLogSummary.
+func (c *ExecLogSummaryClient) QueryBazelInvocation(_m *ExecLogSummary) *BazelInvocationQuery {
+	query := (&BazelInvocationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(execlogsummary.Table, execlogsummary.FieldID, id),
+			sqlgraph.To(bazelinvocation.Table, bazelinvocation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, execlogsummary.BazelInvocationTable, execlogsummary.BazelInvocationColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ExecLogSummaryClient) Hooks() []Hook {
+	hooks := c.hooks.ExecLogSummary
+	return append(hooks[:len(hooks):len(hooks)], execlogsummary.Hooks[:]...)
+}
+
+// Interceptors returns the client interceptors.
+func (c *ExecLogSummaryClient) Interceptors() []Interceptor {
+	return c.inters.ExecLogSummary
+}
+
+func (c *ExecLogSummaryClient) mutate(ctx context.Context, m *ExecLogSummaryMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ExecLogSummaryCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ExecLogSummaryUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ExecLogSummaryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ExecLogSummaryDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ExecLogSummary mutation op: %q", m.Op())
+	}
+}
+
 // FileClient is a client for the File schema.
 type FileClient struct {
 	config
@@ -4402,6 +5164,22 @@ func (c *FileClient) QueryInvocationProfile(_m *File) *BazelInvocationQuery {
 			sqlgraph.From(file.Table, file.FieldID, id),
 			sqlgraph.To(bazelinvocation.Table, bazelinvocation.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, true, file.InvocationProfileTable, file.InvocationProfileColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryInvocationExecLog queries the invocation_exec_log edge of a File.
+func (c *FileClient) QueryInvocationExecLog(_m *File) *BazelInvocationQuery {
+	query := (&BazelInvocationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(file.Table, file.FieldID, id),
+			sqlgraph.To(bazelinvocation.Table, bazelinvocation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, file.InvocationExecLogTable, file.InvocationExecLogColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -5096,6 +5874,22 @@ func (c *InstanceNameClient) QueryFilePaths(_m *InstanceName) *FilePathQuery {
 			sqlgraph.From(instancename.Table, instancename.FieldID, id),
 			sqlgraph.To(filepath.Table, filepath.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, instancename.FilePathsTable, instancename.FilePathsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryActionKeys queries the action_keys edge of a InstanceName.
+func (c *InstanceNameClient) QueryActionKeys(_m *InstanceName) *ActionKeyQuery {
+	query := (&ActionKeyClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(instancename.Table, instancename.FieldID, id),
+			sqlgraph.To(actionkey.Table, actionkey.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, instancename.ActionKeysTable, instancename.ActionKeysColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -9174,30 +9968,33 @@ func (c *WorkerStatsClient) mutate(ctx context.Context, m *WorkerStatsMutation) 
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Action, ActionCacheStatistics, ActionData, ActionSummary, ArtifactMetrics,
-		AuthenticatedUser, BazelInvocation, Build, BuildGraphAspectCount,
-		BuildGraphEvaluationStat, BuildGraphMetrics, BuildGraphRuleClassCount,
-		BuildLogChunk, BuildTag, Configuration, ConnectionMetadata, CumulativeMetrics,
-		Digest, DynamicExecutionMetrics, DynamicExecutionRaceStatistic, EventMetadata,
-		File, FilePath, GarbageMetrics, IncompleteBuildLog, InstanceName,
-		InvocationTag, InvocationTarget, MemoryMetrics, Metrics, MissDetail,
-		NetworkMetrics, PackageLoadMetrics, PackageMetrics, RunnerCount, SourceControl,
-		SystemNetworkStats, Target, TargetKindMapping, TargetMetrics, TestActionOutput,
-		TestResult, TestSummary, TestTarget, TimingMetrics, WorkerID, WorkerMetrics,
-		WorkerPoolMetrics, WorkerPoolStats, WorkerStats []ent.Hook
+		Action, ActionCacheStatistics, ActionData, ActionExecution, ActionKey,
+		ActionSummary, ActionVersion, ArtifactMetrics, AuthenticatedUser,
+		BazelInvocation, Build, BuildGraphAspectCount, BuildGraphEvaluationStat,
+		BuildGraphMetrics, BuildGraphRuleClassCount, BuildLogChunk, BuildTag,
+		Configuration, ConnectionMetadata, CumulativeMetrics, Digest,
+		DynamicExecutionMetrics, DynamicExecutionRaceStatistic, EventMetadata,
+		ExecLogSummary, File, FilePath, GarbageMetrics, IncompleteBuildLog,
+		InstanceName, InvocationTag, InvocationTarget, MemoryMetrics, Metrics,
+		MissDetail, NetworkMetrics, PackageLoadMetrics, PackageMetrics, RunnerCount,
+		SourceControl, SystemNetworkStats, Target, TargetKindMapping, TargetMetrics,
+		TestActionOutput, TestResult, TestSummary, TestTarget, TimingMetrics, WorkerID,
+		WorkerMetrics, WorkerPoolMetrics, WorkerPoolStats, WorkerStats []ent.Hook
 	}
 	inters struct {
-		Action, ActionCacheStatistics, ActionData, ActionSummary, ArtifactMetrics,
-		AuthenticatedUser, BazelInvocation, Build, BuildGraphAspectCount,
-		BuildGraphEvaluationStat, BuildGraphMetrics, BuildGraphRuleClassCount,
-		BuildLogChunk, BuildTag, Configuration, ConnectionMetadata, CumulativeMetrics,
-		Digest, DynamicExecutionMetrics, DynamicExecutionRaceStatistic, EventMetadata,
-		File, FilePath, GarbageMetrics, IncompleteBuildLog, InstanceName,
-		InvocationTag, InvocationTarget, MemoryMetrics, Metrics, MissDetail,
-		NetworkMetrics, PackageLoadMetrics, PackageMetrics, RunnerCount, SourceControl,
-		SystemNetworkStats, Target, TargetKindMapping, TargetMetrics, TestActionOutput,
-		TestResult, TestSummary, TestTarget, TimingMetrics, WorkerID, WorkerMetrics,
-		WorkerPoolMetrics, WorkerPoolStats, WorkerStats []ent.Interceptor
+		Action, ActionCacheStatistics, ActionData, ActionExecution, ActionKey,
+		ActionSummary, ActionVersion, ArtifactMetrics, AuthenticatedUser,
+		BazelInvocation, Build, BuildGraphAspectCount, BuildGraphEvaluationStat,
+		BuildGraphMetrics, BuildGraphRuleClassCount, BuildLogChunk, BuildTag,
+		Configuration, ConnectionMetadata, CumulativeMetrics, Digest,
+		DynamicExecutionMetrics, DynamicExecutionRaceStatistic, EventMetadata,
+		ExecLogSummary, File, FilePath, GarbageMetrics, IncompleteBuildLog,
+		InstanceName, InvocationTag, InvocationTarget, MemoryMetrics, Metrics,
+		MissDetail, NetworkMetrics, PackageLoadMetrics, PackageMetrics, RunnerCount,
+		SourceControl, SystemNetworkStats, Target, TargetKindMapping, TargetMetrics,
+		TestActionOutput, TestResult, TestSummary, TestTarget, TimingMetrics, WorkerID,
+		WorkerMetrics, WorkerPoolMetrics, WorkerPoolStats,
+		WorkerStats []ent.Interceptor
 	}
 )
 
