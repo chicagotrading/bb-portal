@@ -12,6 +12,74 @@ import (
 	"github.com/lib/pq"
 )
 
+const aggregateActionExecutions = `-- name: AggregateActionExecutions :many
+SELECT
+    e.action_key_id,
+    count(*)::bigint AS executions,
+    count(DISTINCT e.bazel_invocation_id)::bigint AS invocations,
+    sum(e.total_ms)::bigint AS total_ms,
+    sum(e.exec_wall_ms)::bigint AS exec_wall_ms,
+    sum(e.queue_ms)::bigint AS queue_ms,
+    (percentile_disc(0.5) WITHIN GROUP (ORDER BY e.total_ms))::bigint AS p50_ms,
+    (percentile_disc(0.95) WITHIN GROUP (ORDER BY e.total_ms))::bigint AS p95_ms,
+    max(e.total_ms)::bigint AS max_ms
+FROM action_executions e
+WHERE e.bazel_invocation_id = ANY($1::bigint[])
+GROUP BY e.action_key_id
+ORDER BY total_ms DESC, e.action_key_id
+LIMIT $2::bigint
+`
+
+type AggregateActionExecutionsParams struct {
+	BazelInvocationIds []int64
+	RowLimit           int64
+}
+
+type AggregateActionExecutionsRow struct {
+	ActionKeyID int64
+	Executions  int64
+	Invocations int64
+	TotalMs     int64
+	ExecWallMs  int64
+	QueueMs     int64
+	P50Ms       int64
+	P95Ms       int64
+	MaxMs       int64
+}
+
+func (q *Queries) AggregateActionExecutions(ctx context.Context, arg AggregateActionExecutionsParams) ([]AggregateActionExecutionsRow, error) {
+	rows, err := q.db.QueryContext(ctx, aggregateActionExecutions, pq.Array(arg.BazelInvocationIds), arg.RowLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []AggregateActionExecutionsRow
+	for rows.Next() {
+		var i AggregateActionExecutionsRow
+		if err := rows.Scan(
+			&i.ActionKeyID,
+			&i.Executions,
+			&i.Invocations,
+			&i.TotalMs,
+			&i.ExecWallMs,
+			&i.QueueMs,
+			&i.P50Ms,
+			&i.P95Ms,
+			&i.MaxMs,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const claimExecLogSummary = `-- name: ClaimExecLogSummary :one
 INSERT INTO exec_log_summaries AS s (
     bazel_invocation_id, status, attempts, started_at,
@@ -190,6 +258,52 @@ func (q *Queries) FindExecLogsToIngest(ctx context.Context, arg FindExecLogsToIn
 			&i.Hash,
 			&i.SizeBytes,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getActionExecutionTimes = `-- name: GetActionExecutionTimes :many
+SELECT
+    e.bazel_invocation_id,
+    e.action_key_id,
+    sum(e.total_ms)::bigint AS total_ms
+FROM action_executions e
+WHERE
+    e.bazel_invocation_id = ANY($1::bigint[])
+    AND e.action_key_id = ANY($2::bigint[])
+GROUP BY e.bazel_invocation_id, e.action_key_id
+`
+
+type GetActionExecutionTimesParams struct {
+	BazelInvocationIds []int64
+	ActionKeyIds       []int64
+}
+
+type GetActionExecutionTimesRow struct {
+	BazelInvocationID int64
+	ActionKeyID       int64
+	TotalMs           int64
+}
+
+func (q *Queries) GetActionExecutionTimes(ctx context.Context, arg GetActionExecutionTimesParams) ([]GetActionExecutionTimesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getActionExecutionTimes, pq.Array(arg.BazelInvocationIds), pq.Array(arg.ActionKeyIds))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetActionExecutionTimesRow
+	for rows.Next() {
+		var i GetActionExecutionTimesRow
+		if err := rows.Scan(&i.BazelInvocationID, &i.ActionKeyID, &i.TotalMs); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -420,6 +534,19 @@ func (q *Queries) ListActionKeyLabels(ctx context.Context, instanceNameID int64)
 		return nil, err
 	}
 	return items, nil
+}
+
+const sumActionExecutionTime = `-- name: SumActionExecutionTime :one
+SELECT coalesce(sum(e.total_ms), 0)::bigint AS total_ms
+FROM action_executions e
+WHERE e.bazel_invocation_id = ANY($1::bigint[])
+`
+
+func (q *Queries) SumActionExecutionTime(ctx context.Context, bazelInvocationIds []int64) (int64, error) {
+	row := q.db.QueryRowContext(ctx, sumActionExecutionTime, pq.Array(bazelInvocationIds))
+	var total_ms int64
+	err := row.Scan(&total_ms)
+	return total_ms, err
 }
 
 const touchActionVersions = `-- name: TouchActionVersions :execrows

@@ -25,3 +25,233 @@ extend input BazelInvocationWhereInput {
   """
   commandIn: [String!]
 }
+
+extend type Query {
+  """
+  Action impact and churn over the newest `invocationLimit` invocations
+  matching `where` whose compact execution log
+  (--execution_log_compact_file) has been ingested. They are compared in
+  started_at order.
+  """
+  actionInsights(
+    where: BazelInvocationWhereInput
+    invocationLimit: Int = 100
+    rowLimit: Int = 100
+  ): ActionInsights!
+
+  """
+  The versions and executions of one action over the invocations
+  actionInsights analyzes for the same arguments, oldest first. Only
+  invocations that ran the action are returned.
+  """
+  actionHistory(
+    keyId: ID!
+    where: BazelInvocationWhereInput
+    invocationLimit: Int = 100
+  ): [ActionHistoryEntry!]!
+
+  """
+  Values to filter actionInsights by, taken from the invocations matching
+  `where` whose execution log has been ingested. Each list is ordered by
+  invocation count, highest first, and holds at most 200 values (refs: per
+  repo).
+  """
+  actionInsightsFilterOptions(
+    where: BazelInvocationWhereInput
+  ): ActionInsightsFilterOptions!
+}
+
+type ActionInsightsFilterOptions {
+  "Source control repos."
+  repos: [ActionInsightsFilterOption!]!
+  "Source control refs and the repo they belong to."
+  refs: [ActionInsightsRefOption!]!
+  "Usernames of the invocations."
+  users: [ActionInsightsFilterOption!]!
+}
+
+type ActionInsightsFilterOption {
+  value: String!
+  "Analyzed invocations with this value."
+  invocations: Int!
+}
+
+type ActionInsightsRefOption {
+  "Null when the source control has a ref but no repo."
+  repo: String
+  ref: String!
+  "Analyzed invocations with this repo and ref."
+  invocations: Int!
+}
+
+"""
+What changed an action: its own command or inputs, inputs owned by other
+targets, both, or nothing the input fingerprints show.
+"""
+enum ActionChangeCause {
+  DIRECT
+  DEPENDENCY
+  BOTH
+  UNKNOWN
+}
+
+"""
+Owner of an input group. SOURCE is workspace sources and files Bazel
+writes for the target itself, like its module map ("src:<path>" for the
+target's own package, "//<dir> (sources)" elsewhere). GENERATED is outputs
+of spawns, named by package and configuration ("//<package> (<config>)",
+"//<package>:<test> (<config>)" for test logs, "bazel-out:<path>"
+otherwise). EXTERNAL is an external repository ("@<repo>"). COMMAND is the
+arguments, environment, platform and param files ("cmd").
+"""
+enum ActionInputGroupKind {
+  SOURCE
+  GENERATED
+  EXTERNAL
+  COMMAND
+}
+
+type ActionInsights {
+  """
+  Invocations matched by the filter that started no earlier than the
+  oldest analyzed one, or all matched if none is analyzed. The counts below
+  split them up.
+  """
+  invocationsMatched: Int!
+  "Matched invocations with an ingested execution log, at most invocationLimit."
+  invocationsAnalyzed: Int!
+  "Matched invocations whose execution log is not ingested yet."
+  invocationsPending: Int!
+  "Matched invocations whose execution log failed to ingest."
+  invocationsFailed: Int!
+  "Matched invocations that published no execution log."
+  invocationsWithoutLog: Int!
+  "Distinct source control refs of the analyzed invocations, per repo."
+  refsAnalyzed: Int!
+  spawnsAnalyzed: Int!
+  "Spawns that were executed rather than served from a cache."
+  executedSpawns: Int!
+  executedTimeMs: Int!
+  "Changes over all actions."
+  changesTotal: Int!
+  "Changes whose cause was classified, for the causes list."
+  changesExplained: Int!
+  "Actions by executed time, descending."
+  impact: [ActionImpact!]!
+  "Actions by new versions, then changes, descending."
+  churn: [ActionChurn!]!
+  "Input groups by new versions, then changes, descending."
+  causes: [ActionChurnCause!]!
+}
+
+type ActionImpact {
+  "Pass to actionHistory."
+  keyId: ID!
+  targetLabel: String!
+  mnemonic: String!
+  "Path of the first output, including its bazel-out/<config> prefix."
+  primaryOutput: String!
+  executions: Int!
+  "Invocations in which the action was executed."
+  invocations: Int!
+  totalMs: Int!
+  execWallMs: Int!
+  queueMs: Int!
+  p50Ms: Int!
+  p95Ms: Int!
+  maxMs: Int!
+  "totalMs over executedTimeMs, between 0 and 1."
+  share: Float!
+}
+
+type ActionChurn {
+  keyId: ID!
+  targetLabel: String!
+  mnemonic: String!
+  primaryOutput: String!
+  changes: Int!
+  """
+  Changes to a version not seen earlier in the analyzed invocations.
+  Returning to a known version, as when builds of two branches alternate,
+  is a change but not a new version.
+  """
+  newVersions: Int!
+  direct: Int!
+  dependency: Int!
+  both: Int!
+  unknown: Int!
+  "Changes after which the action was executed rather than a cache hit."
+  executedAfterChange: Int!
+  "Executed time of the action in the invocations where it changed."
+  timeMs: Int!
+  "The input groups that changed most often, at most five."
+  topCauses: [ActionInputGroupCount!]!
+}
+
+type ActionInputGroupCount {
+  name: String!
+  kind: ActionInputGroupKind!
+  count: Int!
+}
+
+type ActionChurnCause {
+  name: String!
+  kind: ActionInputGroupKind!
+  "Times the group changed under some action."
+  changes: Int!
+  "Those changes that gave the action a new version."
+  newVersions: Int!
+  "Distinct actions under which the group changed."
+  actionsAffected: Int!
+  "Executed time of those actions in the invocations where it changed."
+  timeMs: Int!
+}
+
+type ActionDigest {
+  hash: String!
+  """
+  0 for spawns without an action digest, such as local executions without
+  a remote cache. Their hash is computed from the inputs and names no
+  action in the CAS.
+  """
+  sizeBytes: Int!
+}
+
+type ActionExecutionMetrics {
+  runner: String!
+  exitCode: Int!
+  totalMs: Int!
+  queueMs: Int!
+  execWallMs: Int!
+  fetchMs: Int!
+  uploadMs: Int!
+  inputBytes: Int!
+  inputFiles: Int!
+  memoryPeakBytes: Int!
+  "Start relative to the first spawn of the invocation."
+  startOffsetMs: Int
+}
+
+type ActionHistoryEntry {
+  invocationId: UUID!
+  startedAt: Time
+  "REv2 instance name of the digests."
+  instanceName: String!
+  "Digest function of the digests, e.g. sha256."
+  digestFunction: String!
+  digest: ActionDigest!
+  "The digest in the previous analyzed invocation that ran the action."
+  previousDigest: ActionDigest
+  changed: Boolean!
+  "Changed to a version not seen in an earlier analyzed invocation."
+  newVersion: Boolean!
+  "Set when changed."
+  cause: ActionChangeCause
+  changedGroups: [String!]!
+  "The longest execution in the invocation; null when it was a cache hit."
+  execution: ActionExecutionMetrics
+  "Executions in the invocation, e.g. several with --flaky_test_attempts."
+  executions: Int!
+  "Total time of those executions."
+  executedMs: Int!
+}
