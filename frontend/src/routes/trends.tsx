@@ -1,13 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { TRENDS_WINDOWS, TrendsPage } from "@/components/pages/Trends";
+import { TrendsPage } from "@/components/pages/Trends";
 import { env } from "@/utils/env";
 import { requireFeature } from "@/utils/featureGuard";
 import { generatePageTitle } from "@/utils/generatePageTitle";
+import { INVOCATION_WINDOWS } from "@/utils/invocationWindows";
 
 const TrendsSearchSchema = z.object({
   limit: z.number().int().min(1).max(10000).optional().catch(undefined),
-  window: z.enum(Object.keys(TRENDS_WINDOWS)).optional().catch(undefined),
+  window: z.enum(Object.keys(INVOCATION_WINDOWS)).optional().catch(undefined),
 });
 
 export const Route = createFileRoute("/trends")({

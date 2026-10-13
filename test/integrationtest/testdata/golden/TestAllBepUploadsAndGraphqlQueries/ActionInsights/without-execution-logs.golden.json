@@ -1,0 +1,18 @@
+{
+  "actionInsights": {
+    "causes": [],
+    "changesExplained": 0,
+    "changesTotal": 0,
+    "churn": [],
+    "executedSpawns": 0,
+    "executedTimeMs": 0,
+    "impact": [],
+    "invocationsAnalyzed": 0,
+    "invocationsFailed": 0,
+    "invocationsMatched": 10,
+    "invocationsPending": 0,
+    "invocationsWithoutLog": 10,
+    "refsAnalyzed": 0,
+    "spawnsAnalyzed": 0
+  }
+}

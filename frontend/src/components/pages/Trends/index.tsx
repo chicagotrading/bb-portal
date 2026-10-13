@@ -33,6 +33,10 @@ import {
 import dayjs from "@/lib/dayjs";
 import { BAZEL_COMMANDS } from "@/utils/bazelCommands";
 import {
+  INVOCATION_WINDOWS,
+  invocationWindowWhere,
+} from "@/utils/invocationWindows";
+import {
   readableDurationFromMilliseconds,
   spelledOutDurationFromMilliseconds,
 } from "@/utils/time";
@@ -40,15 +44,6 @@ import FIND_BUILD_DURATIONS from "./index.graphql";
 
 const TRENDS_DEFAULT_LIMIT = 1000;
 const TRENDS_LIMITS = [100, 500, 1000, 5000];
-
-// Hours to look back, or undefined for every invocation still kept.
-export const TRENDS_WINDOWS: Record<string, { label: string; hours?: number }> =
-  {
-    all: { label: "All kept" },
-    "24h": { label: "Last 24 hours", hours: 24 },
-    "7d": { label: "Last 7 days", hours: 7 * 24 },
-    "30d": { label: "Last 30 days", hours: 30 * 24 },
-  };
 
 // Width of a distribution bin, in decades of milliseconds (about 26% per bin).
 const LOG_BIN_WIDTH = 0.1;
@@ -100,16 +95,11 @@ export const TrendsPage: React.FC = () => {
   const timeWindow = search.window ?? "all";
   const navigate = useNavigate({ from: "/trends" });
   const variables = useMemo<FindBuildTimesQueryVariables>(() => {
-    const hours = TRENDS_WINDOWS[timeWindow]?.hours;
     return {
       first: limit,
       where: {
-        startedAtNotNil: true,
+        ...invocationWindowWhere(timeWindow, commands, new Date()),
         endedAtNotNil: true,
-        ...(hours && {
-          startedAtGT: dayjs().subtract(hours, "hour").toISOString(),
-        }),
-        ...(commands.length > 0 && { commandIn: commands }),
       },
       // Newest first; without an order the API returns the oldest invocations still kept.
       orderBy: {
@@ -272,7 +262,7 @@ export const TrendsPage: React.FC = () => {
             onChange={(value) =>
               navigate({ search: (prev) => ({ ...prev, window: value }) })
             }
-            options={Object.entries(TRENDS_WINDOWS).map(([value, w]) => ({
+            options={Object.entries(INVOCATION_WINDOWS).map(([value, w]) => ({
               value,
               label: w.label,
             }))}
