@@ -28,6 +28,40 @@ extend input BazelInvocationWhereInput {
 
 extend type Query {
   """
+  Values to filter invocations by, taken from the invocations matching
+  `where`. Each list is ordered by invocation count, highest first, and
+  holds at most 200 values (refs: per repo).
+  """
+  invocationFilterOptions(
+    where: BazelInvocationWhereInput
+  ): InvocationFilterOptions!
+}
+
+type InvocationFilterOptions {
+  "Source control repos."
+  repos: [InvocationFilterOption!]!
+  "Source control refs and the repo they belong to."
+  refs: [InvocationRefOption!]!
+  "Usernames of the invocations."
+  users: [InvocationFilterOption!]!
+}
+
+type InvocationFilterOption {
+  value: String!
+  "Counted invocations with this value."
+  invocations: Int!
+}
+
+type InvocationRefOption {
+  "Null when the source control has a ref but no repo."
+  repo: String
+  ref: String!
+  "Counted invocations with this repo and ref."
+  invocations: Int!
+}
+
+extend type Query {
+  """
   Action impact and churn over the newest `invocationLimit` invocations
   matching `where` whose compact execution log
   (--execution_log_compact_file) has been ingested. They are compared in
@@ -51,37 +85,12 @@ extend type Query {
   ): [ActionHistoryEntry!]!
 
   """
-  Values to filter actionInsights by, taken from the invocations matching
-  `where` whose execution log has been ingested. Each list is ordered by
-  invocation count, highest first, and holds at most 200 values (refs: per
-  repo).
+  invocationFilterOptions, counting only the invocations matching `where`
+  whose execution log has been ingested.
   """
   actionInsightsFilterOptions(
     where: BazelInvocationWhereInput
-  ): ActionInsightsFilterOptions!
-}
-
-type ActionInsightsFilterOptions {
-  "Source control repos."
-  repos: [ActionInsightsFilterOption!]!
-  "Source control refs and the repo they belong to."
-  refs: [ActionInsightsRefOption!]!
-  "Usernames of the invocations."
-  users: [ActionInsightsFilterOption!]!
-}
-
-type ActionInsightsFilterOption {
-  value: String!
-  "Analyzed invocations with this value."
-  invocations: Int!
-}
-
-type ActionInsightsRefOption {
-  "Null when the source control has a ref but no repo."
-  repo: String
-  ref: String!
-  "Analyzed invocations with this repo and ref."
-  invocations: Int!
+  ): InvocationFilterOptions!
 }
 
 """

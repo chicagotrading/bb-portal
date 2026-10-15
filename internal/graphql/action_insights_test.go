@@ -303,11 +303,14 @@ func TestActionInsights(t *testing.T) {
 }
 
 const filterOptionsQuery = `query ($where: BazelInvocationWhereInput) {
-  actionInsightsFilterOptions(where: $where) {
-    repos { value invocations }
-    refs { repo ref invocations }
-    users { value invocations }
-  }
+  actionInsightsFilterOptions(where: $where) { ...options }
+  invocationFilterOptions(where: $where) { ...options }
+}
+
+fragment options on InvocationFilterOptions {
+  repos { value invocations }
+  refs { repo ref invocations }
+  users { value invocations }
 }`
 
 func TestActionInsightsFilterOptions(t *testing.T) {
@@ -368,11 +371,15 @@ func TestActionInsightsFilterOptions(t *testing.T) {
 		Repo        *string
 		Invocations int
 	}
+	type options struct{ Repos, Refs, Users []option }
+	var all options
 	run := func(where map[string]any) (repos, refs, users []option) {
 		var got struct {
-			ActionInsightsFilterOptions struct{ Repos, Refs, Users []option }
+			ActionInsightsFilterOptions options
+			InvocationFilterOptions     options
 		}
 		require.NoError(t, json.Unmarshal(query(t, server.URL, filterOptionsQuery, map[string]any{"where": where}), &got))
+		all = got.InvocationFilterOptions
 		o := got.ActionInsightsFilterOptions
 		return o.Repos, o.Refs, o.Users
 	}
@@ -387,12 +394,39 @@ func TestActionInsightsFilterOptions(t *testing.T) {
 		{Repo: str("tsg/nebula"), Ref: "mr-branch", Invocations: 1},
 	}, refs)
 	require.Equal(t, []option{{Value: "alice", Invocations: 3}, {Value: "bob", Invocations: 1}, {Value: "carol", Invocations: 1}}, users)
+	// invocationFilterOptions also counts invocations without an ingested
+	// log, but still only authorized ones.
+	require.Equal(t, []option{{Value: "tsg/nebula", Invocations: 5}, {Value: "ctc/monorepo", Invocations: 1}}, all.Repos)
+	require.Equal(t, []option{
+		{Repo: str("tsg/nebula"), Ref: "features/pilot", Invocations: 2},
+		{Repo: str("tsg/nebula"), Ref: "other", Invocations: 2},
+		{Repo: str("ctc/monorepo"), Ref: "features/pilot", Invocations: 1},
+		{Ref: "local-ref", Invocations: 1},
+		{Repo: str("tsg/nebula"), Ref: "mr-branch", Invocations: 1},
+	}, all.Refs)
+	require.Equal(t, []option{
+		{Value: "alice", Invocations: 3},
+		{Value: "bob", Invocations: 1},
+		{Value: "carol", Invocations: 1},
+		{Value: "dave", Invocations: 1},
+		{Value: "erin", Invocations: 1},
+	}, all.Users)
 
 	// The filter applies.
 	repos, refs, users = run(map[string]any{"startedAtGT": base.Add(150 * time.Minute).Format(time.RFC3339)})
 	require.Equal(t, []option{{Value: "ctc/monorepo", Invocations: 1}, {Value: "tsg/nebula", Invocations: 1}}, repos)
 	require.Len(t, refs, 3)
 	require.Equal(t, []option{{Value: "alice", Invocations: 2}, {Value: "carol", Invocations: 1}}, users)
+	require.Equal(t, []option{{Value: "tsg/nebula", Invocations: 3}, {Value: "ctc/monorepo", Invocations: 1}}, all.Repos)
+	require.Equal(t, []option{{Value: "alice", Invocations: 2}, {Value: "carol", Invocations: 1}, {Value: "dave", Invocations: 1}, {Value: "erin", Invocations: 1}}, all.Users)
+
+	// The Trends filters: users, a branch and not CI.
+	run(map[string]any{"usernameIn": []string{"dave", "erin"}})
+	require.Equal(t, []option{{Value: "tsg/nebula", Invocations: 2}}, all.Repos)
+	run(map[string]any{"not": map[string]any{"hasSourceControlWith": []any{map[string]any{"repoNotNil": true}}}})
+	require.Empty(t, all.Repos)
+	require.Equal(t, []option{{Ref: "local-ref", Invocations: 1}}, all.Refs)
+	require.Equal(t, []option{{Value: "carol", Invocations: 1}}, all.Users)
 
 	// The filters the page builds: a CI branch, users, and CI or not, where
 	// CI means a source control with a repo.

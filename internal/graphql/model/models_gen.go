@@ -151,26 +151,26 @@ type ActionInsights struct {
 	Causes []*ActionChurnCause `json:"causes"`
 }
 
-type ActionInsightsFilterOption struct {
+type InvocationFilterOption struct {
 	Value string `json:"value"`
-	// Analyzed invocations with this value.
+	// Counted invocations with this value.
 	Invocations int `json:"invocations"`
 }
 
-type ActionInsightsFilterOptions struct {
+type InvocationFilterOptions struct {
 	// Source control repos.
-	Repos []*ActionInsightsFilterOption `json:"repos"`
+	Repos []*InvocationFilterOption `json:"repos"`
 	// Source control refs and the repo they belong to.
-	Refs []*ActionInsightsRefOption `json:"refs"`
+	Refs []*InvocationRefOption `json:"refs"`
 	// Usernames of the invocations.
-	Users []*ActionInsightsFilterOption `json:"users"`
+	Users []*InvocationFilterOption `json:"users"`
 }
 
-type ActionInsightsRefOption struct {
+type InvocationRefOption struct {
 	// Null when the source control has a ref but no repo.
 	Repo *string `json:"repo,omitempty"`
 	Ref  string  `json:"ref"`
-	// Analyzed invocations with this repo and ref.
+	// Counted invocations with this repo and ref.
 	Invocations int `json:"invocations"`
 }
 

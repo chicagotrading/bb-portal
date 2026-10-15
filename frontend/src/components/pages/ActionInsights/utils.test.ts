@@ -14,7 +14,6 @@ import {
   causeSummary,
   changesPerAction,
   coverageParts,
-  describeInvocations,
   emptyReason,
   executionsPerAction,
   fitText,
@@ -31,12 +30,9 @@ import {
   heatTree,
   historyPoints,
   IMPACT_FIELDS,
-  type InsightsFilters,
-  insightsWhere,
   type MapRow,
   mapCells,
   queueShare,
-  refOptions,
   splitLabel,
   splitOutputPath,
   textColorOn,
@@ -78,107 +74,6 @@ describe("groupText and groupTargetLabel", () => {
   ])("%s", (name, text, label) => {
     expect(groupText(name)).toBe(text);
     expect(groupTargetLabel(name)).toBe(label);
-  });
-});
-
-describe("insightsWhere", () => {
-  const now = new Date("2026-10-13T12:00:00Z");
-
-  it("adds nothing without filters", () => {
-    expect(insightsWhere("all", ["build"], {}, now)).toEqual({
-      startedAtNotNil: true,
-      commandIn: ["build"],
-    });
-    expect(insightsWhere("all", [], { users: [] }, now)).toEqual({
-      startedAtNotNil: true,
-    });
-  });
-
-  it("matches the repo and ref exactly in one source control", () => {
-    expect(
-      insightsWhere(
-        "24h",
-        [],
-        { repo: "tsg/nebula", ref: "features/pilot" },
-        now,
-      ),
-    ).toEqual({
-      startedAtNotNil: true,
-      startedAtGT: "2026-10-12T12:00:00.000Z",
-      hasSourceControlWith: [{ repo: "tsg/nebula", ref: "features/pilot" }],
-    });
-    expect(insightsWhere("all", [], { ref: "main" }, now)).toEqual({
-      startedAtNotNil: true,
-      hasSourceControlWith: [{ ref: "main" }],
-    });
-  });
-
-  it("filters by users", () => {
-    expect(insightsWhere("all", [], { users: ["alice", "bob"] }, now)).toEqual({
-      startedAtNotNil: true,
-      usernameIn: ["alice", "bob"],
-    });
-  });
-
-  it("treats invocations with a source control repo as CI", () => {
-    expect(
-      insightsWhere("all", [], { ci: true, ref: "features/pilot" }, now),
-    ).toEqual({
-      startedAtNotNil: true,
-      hasSourceControlWith: [{ repoNotNil: true, ref: "features/pilot" }],
-    });
-    expect(
-      insightsWhere("all", [], { ci: false, users: ["alice"] }, now),
-    ).toEqual({
-      startedAtNotNil: true,
-      usernameIn: ["alice"],
-      not: { hasSourceControlWith: [{ repoNotNil: true }] },
-    });
-  });
-});
-
-describe("describeInvocations", () => {
-  it.each<[InsightsFilters, string]>([
-    [{}, "invocations"],
-    [{ ci: false }, "non-CI invocations"],
-    [
-      {
-        ci: true,
-        repo: "tsg/nebula",
-        ref: "features/pilot",
-        users: ["a", "b"],
-      },
-      "CI invocations of tsg/nebula on features/pilot by a, b",
-    ],
-    [{ users: [] }, "invocations"],
-  ])("%j -> %s", (filters, text) => {
-    expect(describeInvocations(filters)).toBe(text);
-  });
-});
-
-describe("refOptions", () => {
-  const refs = [
-    { repo: "tsg/nebula", ref: "features/pilot", invocations: 5 },
-    { repo: "tsg/nebula", ref: "mr-1", invocations: 2 },
-    { repo: "ctc/monorepo", ref: "features/pilot", invocations: 1 },
-    { repo: "ctc/monorepo", ref: "main", invocations: 3 },
-    { repo: null, ref: "local", invocations: 2 },
-  ];
-
-  it("scopes refs to the repo", () => {
-    expect(refOptions(refs, "ctc/monorepo")).toEqual([
-      { value: "main", invocations: 3 },
-      { value: "features/pilot", invocations: 1 },
-    ]);
-  });
-
-  it("adds up a ref across repos", () => {
-    expect(refOptions(refs, undefined)).toEqual([
-      { value: "features/pilot", invocations: 6 },
-      { value: "main", invocations: 3 },
-      { value: "local", invocations: 2 },
-      { value: "mr-1", invocations: 2 },
-    ]);
   });
 });
 

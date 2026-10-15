@@ -272,23 +272,6 @@ type ComplexityRoot struct {
 		SpawnsAnalyzed        func(childComplexity int) int
 	}
 
-	ActionInsightsFilterOption struct {
-		Invocations func(childComplexity int) int
-		Value       func(childComplexity int) int
-	}
-
-	ActionInsightsFilterOptions struct {
-		Refs  func(childComplexity int) int
-		Repos func(childComplexity int) int
-		Users func(childComplexity int) int
-	}
-
-	ActionInsightsRefOption struct {
-		Invocations func(childComplexity int) int
-		Ref         func(childComplexity int) int
-		Repo        func(childComplexity int) int
-	}
-
 	ActionSummary struct {
 		ActionCacheStatistics             func(childComplexity int) int
 		ActionData                        func(childComplexity int) int
@@ -531,6 +514,23 @@ type ComplexityRoot struct {
 		Targets          func(childComplexity int) int
 	}
 
+	InvocationFilterOption struct {
+		Invocations func(childComplexity int) int
+		Value       func(childComplexity int) int
+	}
+
+	InvocationFilterOptions struct {
+		Refs  func(childComplexity int) int
+		Repos func(childComplexity int) int
+		Users func(childComplexity int) int
+	}
+
+	InvocationRefOption struct {
+		Invocations func(childComplexity int) int
+		Ref         func(childComplexity int) int
+		Repo        func(childComplexity int) int
+	}
+
 	InvocationTag struct {
 		BazelInvocation func(childComplexity int) int
 		ID              func(childComplexity int) int
@@ -650,6 +650,7 @@ type ComplexityRoot struct {
 		GetBuild                    func(childComplexity int, buildUUID uuid.UUID) int
 		GetTarget                   func(childComplexity int, id string) int
 		GetTestSummary              func(childComplexity int, invocationID uuid.UUID, testSummaryID string) int
+		InvocationFilterOptions     func(childComplexity int, where *ent.BazelInvocationWhereInput) int
 		Node                        func(childComplexity int, id string) int
 		Nodes                       func(childComplexity int, ids []string) int
 	}
@@ -956,9 +957,10 @@ type QueryResolver interface {
 	GetBuild(ctx context.Context, buildUUID uuid.UUID) (*ent.Build, error)
 	GetTarget(ctx context.Context, id string) (*ent.Target, error)
 	GetTestSummary(ctx context.Context, invocationID uuid.UUID, testSummaryID string) (*ent.TestSummary, error)
+	InvocationFilterOptions(ctx context.Context, where *ent.BazelInvocationWhereInput) (*model.InvocationFilterOptions, error)
 	ActionInsights(ctx context.Context, where *ent.BazelInvocationWhereInput, invocationLimit *int, rowLimit *int) (*model.ActionInsights, error)
 	ActionHistory(ctx context.Context, keyID string, where *ent.BazelInvocationWhereInput, invocationLimit *int) ([]*model.ActionHistoryEntry, error)
-	ActionInsightsFilterOptions(ctx context.Context, where *ent.BazelInvocationWhereInput) (*model.ActionInsightsFilterOptions, error)
+	ActionInsightsFilterOptions(ctx context.Context, where *ent.BazelInvocationWhereInput) (*model.InvocationFilterOptions, error)
 }
 type RunnerCountResolver interface {
 	ID(ctx context.Context, obj *ent.RunnerCount) (string, error)
@@ -2145,57 +2147,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.ActionInsights.SpawnsAnalyzed(childComplexity), true
 
-	case "ActionInsightsFilterOption.invocations":
-		if e.ComplexityRoot.ActionInsightsFilterOption.Invocations == nil {
-			break
-		}
-
-		return e.ComplexityRoot.ActionInsightsFilterOption.Invocations(childComplexity), true
-	case "ActionInsightsFilterOption.value":
-		if e.ComplexityRoot.ActionInsightsFilterOption.Value == nil {
-			break
-		}
-
-		return e.ComplexityRoot.ActionInsightsFilterOption.Value(childComplexity), true
-
-	case "ActionInsightsFilterOptions.refs":
-		if e.ComplexityRoot.ActionInsightsFilterOptions.Refs == nil {
-			break
-		}
-
-		return e.ComplexityRoot.ActionInsightsFilterOptions.Refs(childComplexity), true
-	case "ActionInsightsFilterOptions.repos":
-		if e.ComplexityRoot.ActionInsightsFilterOptions.Repos == nil {
-			break
-		}
-
-		return e.ComplexityRoot.ActionInsightsFilterOptions.Repos(childComplexity), true
-	case "ActionInsightsFilterOptions.users":
-		if e.ComplexityRoot.ActionInsightsFilterOptions.Users == nil {
-			break
-		}
-
-		return e.ComplexityRoot.ActionInsightsFilterOptions.Users(childComplexity), true
-
-	case "ActionInsightsRefOption.invocations":
-		if e.ComplexityRoot.ActionInsightsRefOption.Invocations == nil {
-			break
-		}
-
-		return e.ComplexityRoot.ActionInsightsRefOption.Invocations(childComplexity), true
-	case "ActionInsightsRefOption.ref":
-		if e.ComplexityRoot.ActionInsightsRefOption.Ref == nil {
-			break
-		}
-
-		return e.ComplexityRoot.ActionInsightsRefOption.Ref(childComplexity), true
-	case "ActionInsightsRefOption.repo":
-		if e.ComplexityRoot.ActionInsightsRefOption.Repo == nil {
-			break
-		}
-
-		return e.ComplexityRoot.ActionInsightsRefOption.Repo(childComplexity), true
-
 	case "ActionSummary.actionCacheStatistics":
 		if e.ComplexityRoot.ActionSummary.ActionCacheStatistics == nil {
 			break
@@ -3231,6 +3182,57 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.InstanceName.Targets(childComplexity), true
 
+	case "InvocationFilterOption.invocations":
+		if e.ComplexityRoot.InvocationFilterOption.Invocations == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvocationFilterOption.Invocations(childComplexity), true
+	case "InvocationFilterOption.value":
+		if e.ComplexityRoot.InvocationFilterOption.Value == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvocationFilterOption.Value(childComplexity), true
+
+	case "InvocationFilterOptions.refs":
+		if e.ComplexityRoot.InvocationFilterOptions.Refs == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvocationFilterOptions.Refs(childComplexity), true
+	case "InvocationFilterOptions.repos":
+		if e.ComplexityRoot.InvocationFilterOptions.Repos == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvocationFilterOptions.Repos(childComplexity), true
+	case "InvocationFilterOptions.users":
+		if e.ComplexityRoot.InvocationFilterOptions.Users == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvocationFilterOptions.Users(childComplexity), true
+
+	case "InvocationRefOption.invocations":
+		if e.ComplexityRoot.InvocationRefOption.Invocations == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvocationRefOption.Invocations(childComplexity), true
+	case "InvocationRefOption.ref":
+		if e.ComplexityRoot.InvocationRefOption.Ref == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvocationRefOption.Ref(childComplexity), true
+	case "InvocationRefOption.repo":
+		if e.ComplexityRoot.InvocationRefOption.Repo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.InvocationRefOption.Repo(childComplexity), true
+
 	case "InvocationTag.bazelInvocation":
 		if e.ComplexityRoot.InvocationTag.BazelInvocation == nil {
 			break
@@ -3779,6 +3781,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Query.GetTestSummary(childComplexity, args["invocationID"].(uuid.UUID), args["testSummaryID"].(string)), true
 
+	case "Query.invocationFilterOptions":
+		if e.ComplexityRoot.Query.InvocationFilterOptions == nil {
+			break
+		}
+
+		args, err := ec.field_Query_invocationFilterOptions_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.InvocationFilterOptions(childComplexity, args["where"].(*ent.BazelInvocationWhereInput)), true
 	case "Query.node":
 		if e.ComplexityRoot.Query.Node == nil {
 			break
@@ -4982,40 +4995,6 @@ func (ec *executionContext) childFields_ActionInsights(ctx context.Context, fiel
 	return nil, fmt.Errorf("no field named %q was found under type ActionInsights", field.Name)
 }
 
-func (ec *executionContext) childFields_ActionInsightsFilterOption(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-	switch field.Name {
-	case "value":
-		return ec.fieldContext_ActionInsightsFilterOption_value(ctx, field)
-	case "invocations":
-		return ec.fieldContext_ActionInsightsFilterOption_invocations(ctx, field)
-	}
-	return nil, fmt.Errorf("no field named %q was found under type ActionInsightsFilterOption", field.Name)
-}
-
-func (ec *executionContext) childFields_ActionInsightsFilterOptions(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-	switch field.Name {
-	case "repos":
-		return ec.fieldContext_ActionInsightsFilterOptions_repos(ctx, field)
-	case "refs":
-		return ec.fieldContext_ActionInsightsFilterOptions_refs(ctx, field)
-	case "users":
-		return ec.fieldContext_ActionInsightsFilterOptions_users(ctx, field)
-	}
-	return nil, fmt.Errorf("no field named %q was found under type ActionInsightsFilterOptions", field.Name)
-}
-
-func (ec *executionContext) childFields_ActionInsightsRefOption(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-	switch field.Name {
-	case "repo":
-		return ec.fieldContext_ActionInsightsRefOption_repo(ctx, field)
-	case "ref":
-		return ec.fieldContext_ActionInsightsRefOption_ref(ctx, field)
-	case "invocations":
-		return ec.fieldContext_ActionInsightsRefOption_invocations(ctx, field)
-	}
-	return nil, fmt.Errorf("no field named %q was found under type ActionInsightsRefOption", field.Name)
-}
-
 func (ec *executionContext) childFields_ActionSummary(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -5498,6 +5477,40 @@ func (ec *executionContext) childFields_InstanceName(ctx context.Context, field 
 		return ec.fieldContext_InstanceName_filePaths(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type InstanceName", field.Name)
+}
+
+func (ec *executionContext) childFields_InvocationFilterOption(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "value":
+		return ec.fieldContext_InvocationFilterOption_value(ctx, field)
+	case "invocations":
+		return ec.fieldContext_InvocationFilterOption_invocations(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type InvocationFilterOption", field.Name)
+}
+
+func (ec *executionContext) childFields_InvocationFilterOptions(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "repos":
+		return ec.fieldContext_InvocationFilterOptions_repos(ctx, field)
+	case "refs":
+		return ec.fieldContext_InvocationFilterOptions_refs(ctx, field)
+	case "users":
+		return ec.fieldContext_InvocationFilterOptions_users(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type InvocationFilterOptions", field.Name)
+}
+
+func (ec *executionContext) childFields_InvocationRefOption(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "repo":
+		return ec.fieldContext_InvocationRefOption_repo(ctx, field)
+	case "ref":
+		return ec.fieldContext_InvocationRefOption_ref(ctx, field)
+	case "invocations":
+		return ec.fieldContext_InvocationRefOption_invocations(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type InvocationRefOption", field.Name)
 }
 
 func (ec *executionContext) childFields_InvocationTag(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -6815,6 +6828,20 @@ func (ec *executionContext) field_Query_getTestSummary_args(ctx context.Context,
 		return nil, err
 	}
 	args["testSummaryID"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_invocationFilterOptions_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "where",
+		func(ctx context.Context, v any) (*ent.BazelInvocationWhereInput, error) {
+			return ec.unmarshalOBazelInvocationWhereInput2ᚖgithubᚗcomᚋbuildbarnᚋbbᚑportalᚋentᚋgenᚋentᚐBazelInvocationWhereInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["where"] = arg0
 	return args, nil
 }
 
@@ -9537,217 +9564,6 @@ func (ec *executionContext) fieldContext_ActionInsights_causes(_ context.Context
 		},
 	}
 	return fc, nil
-}
-
-func (ec *executionContext) _ActionInsightsFilterOption_value(ctx context.Context, field graphql.CollectedField, obj *model.ActionInsightsFilterOption) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_ActionInsightsFilterOption_value(ctx, field)
-		},
-		func(ctx context.Context) (any, error) {
-			return obj.Value, nil
-		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
-			return ec.marshalNString2string(ctx, selections, v)
-		},
-		true,
-		true,
-	)
-}
-func (ec *executionContext) fieldContext_ActionInsightsFilterOption_value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("ActionInsightsFilterOption", field, false, false, errors.New("field of type String does not have child fields"))
-}
-
-func (ec *executionContext) _ActionInsightsFilterOption_invocations(ctx context.Context, field graphql.CollectedField, obj *model.ActionInsightsFilterOption) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_ActionInsightsFilterOption_invocations(ctx, field)
-		},
-		func(ctx context.Context) (any, error) {
-			return obj.Invocations, nil
-		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
-			return ec.marshalNInt2int(ctx, selections, v)
-		},
-		true,
-		true,
-	)
-}
-func (ec *executionContext) fieldContext_ActionInsightsFilterOption_invocations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("ActionInsightsFilterOption", field, false, false, errors.New("field of type Int does not have child fields"))
-}
-
-func (ec *executionContext) _ActionInsightsFilterOptions_repos(ctx context.Context, field graphql.CollectedField, obj *model.ActionInsightsFilterOptions) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_ActionInsightsFilterOptions_repos(ctx, field)
-		},
-		func(ctx context.Context) (any, error) {
-			return obj.Repos, nil
-		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v []*model.ActionInsightsFilterOption) graphql.Marshaler {
-			return ec.marshalNActionInsightsFilterOption2ᚕᚖgithubᚗcomᚋbuildbarnᚋbbᚑportalᚋinternalᚋgraphqlᚋmodelᚐActionInsightsFilterOptionᚄ(ctx, selections, v)
-		},
-		true,
-		true,
-	)
-}
-func (ec *executionContext) fieldContext_ActionInsightsFilterOptions_repos(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ActionInsightsFilterOptions",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.childFields_ActionInsightsFilterOption(ctx, field)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ActionInsightsFilterOptions_refs(ctx context.Context, field graphql.CollectedField, obj *model.ActionInsightsFilterOptions) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_ActionInsightsFilterOptions_refs(ctx, field)
-		},
-		func(ctx context.Context) (any, error) {
-			return obj.Refs, nil
-		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v []*model.ActionInsightsRefOption) graphql.Marshaler {
-			return ec.marshalNActionInsightsRefOption2ᚕᚖgithubᚗcomᚋbuildbarnᚋbbᚑportalᚋinternalᚋgraphqlᚋmodelᚐActionInsightsRefOptionᚄ(ctx, selections, v)
-		},
-		true,
-		true,
-	)
-}
-func (ec *executionContext) fieldContext_ActionInsightsFilterOptions_refs(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ActionInsightsFilterOptions",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.childFields_ActionInsightsRefOption(ctx, field)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ActionInsightsFilterOptions_users(ctx context.Context, field graphql.CollectedField, obj *model.ActionInsightsFilterOptions) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_ActionInsightsFilterOptions_users(ctx, field)
-		},
-		func(ctx context.Context) (any, error) {
-			return obj.Users, nil
-		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v []*model.ActionInsightsFilterOption) graphql.Marshaler {
-			return ec.marshalNActionInsightsFilterOption2ᚕᚖgithubᚗcomᚋbuildbarnᚋbbᚑportalᚋinternalᚋgraphqlᚋmodelᚐActionInsightsFilterOptionᚄ(ctx, selections, v)
-		},
-		true,
-		true,
-	)
-}
-func (ec *executionContext) fieldContext_ActionInsightsFilterOptions_users(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ActionInsightsFilterOptions",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.childFields_ActionInsightsFilterOption(ctx, field)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ActionInsightsRefOption_repo(ctx context.Context, field graphql.CollectedField, obj *model.ActionInsightsRefOption) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_ActionInsightsRefOption_repo(ctx, field)
-		},
-		func(ctx context.Context) (any, error) {
-			return obj.Repo, nil
-		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
-			return ec.marshalOString2ᚖstring(ctx, selections, v)
-		},
-		true,
-		false,
-	)
-}
-func (ec *executionContext) fieldContext_ActionInsightsRefOption_repo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("ActionInsightsRefOption", field, false, false, errors.New("field of type String does not have child fields"))
-}
-
-func (ec *executionContext) _ActionInsightsRefOption_ref(ctx context.Context, field graphql.CollectedField, obj *model.ActionInsightsRefOption) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_ActionInsightsRefOption_ref(ctx, field)
-		},
-		func(ctx context.Context) (any, error) {
-			return obj.Ref, nil
-		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
-			return ec.marshalNString2string(ctx, selections, v)
-		},
-		true,
-		true,
-	)
-}
-func (ec *executionContext) fieldContext_ActionInsightsRefOption_ref(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("ActionInsightsRefOption", field, false, false, errors.New("field of type String does not have child fields"))
-}
-
-func (ec *executionContext) _ActionInsightsRefOption_invocations(ctx context.Context, field graphql.CollectedField, obj *model.ActionInsightsRefOption) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_ActionInsightsRefOption_invocations(ctx, field)
-		},
-		func(ctx context.Context) (any, error) {
-			return obj.Invocations, nil
-		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
-			return ec.marshalNInt2int(ctx, selections, v)
-		},
-		true,
-		true,
-	)
-}
-func (ec *executionContext) fieldContext_ActionInsightsRefOption_invocations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("ActionInsightsRefOption", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _ActionSummary_id(ctx context.Context, field graphql.CollectedField, obj *ent.ActionSummary) (ret graphql.Marshaler) {
@@ -14113,6 +13929,217 @@ func (ec *executionContext) fieldContext_InstanceName_filePaths(_ context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _InvocationFilterOption_value(ctx context.Context, field graphql.CollectedField, obj *model.InvocationFilterOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InvocationFilterOption_value(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Value, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InvocationFilterOption_value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("InvocationFilterOption", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _InvocationFilterOption_invocations(ctx context.Context, field graphql.CollectedField, obj *model.InvocationFilterOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InvocationFilterOption_invocations(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Invocations, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InvocationFilterOption_invocations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("InvocationFilterOption", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _InvocationFilterOptions_repos(ctx context.Context, field graphql.CollectedField, obj *model.InvocationFilterOptions) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InvocationFilterOptions_repos(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Repos, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.InvocationFilterOption) graphql.Marshaler {
+			return ec.marshalNInvocationFilterOption2ᚕᚖgithubᚗcomᚋbuildbarnᚋbbᚑportalᚋinternalᚋgraphqlᚋmodelᚐInvocationFilterOptionᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InvocationFilterOptions_repos(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InvocationFilterOptions",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_InvocationFilterOption(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _InvocationFilterOptions_refs(ctx context.Context, field graphql.CollectedField, obj *model.InvocationFilterOptions) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InvocationFilterOptions_refs(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Refs, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.InvocationRefOption) graphql.Marshaler {
+			return ec.marshalNInvocationRefOption2ᚕᚖgithubᚗcomᚋbuildbarnᚋbbᚑportalᚋinternalᚋgraphqlᚋmodelᚐInvocationRefOptionᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InvocationFilterOptions_refs(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InvocationFilterOptions",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_InvocationRefOption(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _InvocationFilterOptions_users(ctx context.Context, field graphql.CollectedField, obj *model.InvocationFilterOptions) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InvocationFilterOptions_users(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Users, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.InvocationFilterOption) graphql.Marshaler {
+			return ec.marshalNInvocationFilterOption2ᚕᚖgithubᚗcomᚋbuildbarnᚋbbᚑportalᚋinternalᚋgraphqlᚋmodelᚐInvocationFilterOptionᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InvocationFilterOptions_users(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InvocationFilterOptions",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_InvocationFilterOption(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _InvocationRefOption_repo(ctx context.Context, field graphql.CollectedField, obj *model.InvocationRefOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InvocationRefOption_repo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Repo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_InvocationRefOption_repo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("InvocationRefOption", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _InvocationRefOption_ref(ctx context.Context, field graphql.CollectedField, obj *model.InvocationRefOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InvocationRefOption_ref(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Ref, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InvocationRefOption_ref(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("InvocationRefOption", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _InvocationRefOption_invocations(ctx context.Context, field graphql.CollectedField, obj *model.InvocationRefOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_InvocationRefOption_invocations(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Invocations, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_InvocationRefOption_invocations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("InvocationRefOption", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
 func (ec *executionContext) _InvocationTag_id(ctx context.Context, field graphql.CollectedField, obj *ent.InvocationTag) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -16426,6 +16453,50 @@ func (ec *executionContext) fieldContext_Query_getTestSummary(ctx context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_invocationFilterOptions(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_invocationFilterOptions(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().InvocationFilterOptions(ctx, fc.Args["where"].(*ent.BazelInvocationWhereInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.InvocationFilterOptions) graphql.Marshaler {
+			return ec.marshalNInvocationFilterOptions2ᚖgithubᚗcomᚋbuildbarnᚋbbᚑportalᚋinternalᚋgraphqlᚋmodelᚐInvocationFilterOptions(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_invocationFilterOptions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_InvocationFilterOptions(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_invocationFilterOptions_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_actionInsights(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -16527,8 +16598,8 @@ func (ec *executionContext) _Query_actionInsightsFilterOptions(ctx context.Conte
 			return ec.Resolvers.Query().ActionInsightsFilterOptions(ctx, fc.Args["where"].(*ent.BazelInvocationWhereInput))
 		},
 		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v *model.ActionInsightsFilterOptions) graphql.Marshaler {
-			return ec.marshalNActionInsightsFilterOptions2ᚖgithubᚗcomᚋbuildbarnᚋbbᚑportalᚋinternalᚋgraphqlᚋmodelᚐActionInsightsFilterOptions(ctx, selections, v)
+		func(ctx context.Context, selections ast.SelectionSet, v *model.InvocationFilterOptions) graphql.Marshaler {
+			return ec.marshalNInvocationFilterOptions2ᚖgithubᚗcomᚋbuildbarnᚋbbᚑportalᚋinternalᚋgraphqlᚋmodelᚐInvocationFilterOptions(ctx, selections, v)
 		},
 		true,
 		true,
@@ -16541,7 +16612,7 @@ func (ec *executionContext) fieldContext_Query_actionInsightsFilterOptions(ctx c
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.childFields_ActionInsightsFilterOptions(ctx, field)
+			return ec.childFields_InvocationFilterOptions(ctx, field)
 		},
 	}
 	defer func() {
@@ -43157,148 +43228,6 @@ func (ec *executionContext) _ActionInsights(ctx context.Context, sel ast.Selecti
 	return out
 }
 
-var actionInsightsFilterOptionImplementors = []string{"ActionInsightsFilterOption"}
-
-func (ec *executionContext) _ActionInsightsFilterOption(ctx context.Context, sel ast.SelectionSet, obj *model.ActionInsightsFilterOption) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, actionInsightsFilterOptionImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ActionInsightsFilterOption")
-		case "value":
-			out.Values[i] = ec._ActionInsightsFilterOption_value(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "invocations":
-			out.Values[i] = ec._ActionInsightsFilterOption_invocations(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
-
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var actionInsightsFilterOptionsImplementors = []string{"ActionInsightsFilterOptions"}
-
-func (ec *executionContext) _ActionInsightsFilterOptions(ctx context.Context, sel ast.SelectionSet, obj *model.ActionInsightsFilterOptions) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, actionInsightsFilterOptionsImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ActionInsightsFilterOptions")
-		case "repos":
-			out.Values[i] = ec._ActionInsightsFilterOptions_repos(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "refs":
-			out.Values[i] = ec._ActionInsightsFilterOptions_refs(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "users":
-			out.Values[i] = ec._ActionInsightsFilterOptions_users(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
-
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var actionInsightsRefOptionImplementors = []string{"ActionInsightsRefOption"}
-
-func (ec *executionContext) _ActionInsightsRefOption(ctx context.Context, sel ast.SelectionSet, obj *model.ActionInsightsRefOption) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, actionInsightsRefOptionImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ActionInsightsRefOption")
-		case "repo":
-			out.Values[i] = ec._ActionInsightsRefOption_repo(ctx, field, obj)
-			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
-			}
-		case "ref":
-			out.Values[i] = ec._ActionInsightsRefOption_ref(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "invocations":
-			out.Values[i] = ec._ActionInsightsRefOption_invocations(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
-
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var actionSummaryImplementors = []string{"ActionSummary", "Node"}
 
 func (ec *executionContext) _ActionSummary(ctx context.Context, sel ast.SelectionSet, obj *ent.ActionSummary) graphql.Marshaler {
@@ -47483,6 +47412,148 @@ func (ec *executionContext) _InstanceName(ctx context.Context, sel ast.Selection
 	return out
 }
 
+var invocationFilterOptionImplementors = []string{"InvocationFilterOption"}
+
+func (ec *executionContext) _InvocationFilterOption(ctx context.Context, sel ast.SelectionSet, obj *model.InvocationFilterOption) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, invocationFilterOptionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("InvocationFilterOption")
+		case "value":
+			out.Values[i] = ec._InvocationFilterOption_value(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "invocations":
+			out.Values[i] = ec._InvocationFilterOption_invocations(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var invocationFilterOptionsImplementors = []string{"InvocationFilterOptions"}
+
+func (ec *executionContext) _InvocationFilterOptions(ctx context.Context, sel ast.SelectionSet, obj *model.InvocationFilterOptions) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, invocationFilterOptionsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("InvocationFilterOptions")
+		case "repos":
+			out.Values[i] = ec._InvocationFilterOptions_repos(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "refs":
+			out.Values[i] = ec._InvocationFilterOptions_refs(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "users":
+			out.Values[i] = ec._InvocationFilterOptions_users(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var invocationRefOptionImplementors = []string{"InvocationRefOption"}
+
+func (ec *executionContext) _InvocationRefOption(ctx context.Context, sel ast.SelectionSet, obj *model.InvocationRefOption) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, invocationRefOptionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("InvocationRefOption")
+		case "repo":
+			out.Values[i] = ec._InvocationRefOption_repo(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "ref":
+			out.Values[i] = ec._InvocationRefOption_ref(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "invocations":
+			out.Values[i] = ec._InvocationRefOption_invocations(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var invocationTagImplementors = []string{"InvocationTag", "Node"}
 
 func (ec *executionContext) _InvocationTag(ctx context.Context, sel ast.SelectionSet, obj *ent.InvocationTag) graphql.Marshaler {
@@ -49564,6 +49635,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}()
 				res = ec._Query_getTestSummary(ctx, field)
 				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "invocationFilterOptions":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_invocationFilterOptions(ctx, field)
+				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
@@ -52613,72 +52706,6 @@ func (ec *executionContext) marshalNActionInsights2ᚖgithubᚗcomᚋbuildbarn�
 	return ec._ActionInsights(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNActionInsightsFilterOption2ᚕᚖgithubᚗcomᚋbuildbarnᚋbbᚑportalᚋinternalᚋgraphqlᚋmodelᚐActionInsightsFilterOptionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ActionInsightsFilterOption) graphql.Marshaler {
-	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
-		fc := graphql.GetFieldContext(ctx)
-		fc.Result = &v[i]
-		return ec.marshalNActionInsightsFilterOption2ᚖgithubᚗcomᚋbuildbarnᚋbbᚑportalᚋinternalᚋgraphqlᚋmodelᚐActionInsightsFilterOption(ctx, sel, v[i])
-	})
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNActionInsightsFilterOption2ᚖgithubᚗcomᚋbuildbarnᚋbbᚑportalᚋinternalᚋgraphqlᚋmodelᚐActionInsightsFilterOption(ctx context.Context, sel ast.SelectionSet, v *model.ActionInsightsFilterOption) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ActionInsightsFilterOption(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNActionInsightsFilterOptions2githubᚗcomᚋbuildbarnᚋbbᚑportalᚋinternalᚋgraphqlᚋmodelᚐActionInsightsFilterOptions(ctx context.Context, sel ast.SelectionSet, v model.ActionInsightsFilterOptions) graphql.Marshaler {
-	return ec._ActionInsightsFilterOptions(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNActionInsightsFilterOptions2ᚖgithubᚗcomᚋbuildbarnᚋbbᚑportalᚋinternalᚋgraphqlᚋmodelᚐActionInsightsFilterOptions(ctx context.Context, sel ast.SelectionSet, v *model.ActionInsightsFilterOptions) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ActionInsightsFilterOptions(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNActionInsightsRefOption2ᚕᚖgithubᚗcomᚋbuildbarnᚋbbᚑportalᚋinternalᚋgraphqlᚋmodelᚐActionInsightsRefOptionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ActionInsightsRefOption) graphql.Marshaler {
-	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
-		fc := graphql.GetFieldContext(ctx)
-		fc.Result = &v[i]
-		return ec.marshalNActionInsightsRefOption2ᚖgithubᚗcomᚋbuildbarnᚋbbᚑportalᚋinternalᚋgraphqlᚋmodelᚐActionInsightsRefOption(ctx, sel, v[i])
-	})
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNActionInsightsRefOption2ᚖgithubᚗcomᚋbuildbarnᚋbbᚑportalᚋinternalᚋgraphqlᚋmodelᚐActionInsightsRefOption(ctx context.Context, sel ast.SelectionSet, v *model.ActionInsightsRefOption) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ActionInsightsRefOption(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNActionSummaryWhereInput2ᚖgithubᚗcomᚋbuildbarnᚋbbᚑportalᚋentᚋgenᚋentᚐActionSummaryWhereInput(ctx context.Context, v any) (*ent.ActionSummaryWhereInput, error) {
 	res, err := ec.unmarshalInputActionSummaryWhereInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
@@ -53156,6 +53183,72 @@ func (ec *executionContext) marshalNInt2uint64(ctx context.Context, sel ast.Sele
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNInvocationFilterOption2ᚕᚖgithubᚗcomᚋbuildbarnᚋbbᚑportalᚋinternalᚋgraphqlᚋmodelᚐInvocationFilterOptionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.InvocationFilterOption) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNInvocationFilterOption2ᚖgithubᚗcomᚋbuildbarnᚋbbᚑportalᚋinternalᚋgraphqlᚋmodelᚐInvocationFilterOption(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNInvocationFilterOption2ᚖgithubᚗcomᚋbuildbarnᚋbbᚑportalᚋinternalᚋgraphqlᚋmodelᚐInvocationFilterOption(ctx context.Context, sel ast.SelectionSet, v *model.InvocationFilterOption) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._InvocationFilterOption(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNInvocationFilterOptions2githubᚗcomᚋbuildbarnᚋbbᚑportalᚋinternalᚋgraphqlᚋmodelᚐInvocationFilterOptions(ctx context.Context, sel ast.SelectionSet, v model.InvocationFilterOptions) graphql.Marshaler {
+	return ec._InvocationFilterOptions(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNInvocationFilterOptions2ᚖgithubᚗcomᚋbuildbarnᚋbbᚑportalᚋinternalᚋgraphqlᚋmodelᚐInvocationFilterOptions(ctx context.Context, sel ast.SelectionSet, v *model.InvocationFilterOptions) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._InvocationFilterOptions(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNInvocationRefOption2ᚕᚖgithubᚗcomᚋbuildbarnᚋbbᚑportalᚋinternalᚋgraphqlᚋmodelᚐInvocationRefOptionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.InvocationRefOption) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNInvocationRefOption2ᚖgithubᚗcomᚋbuildbarnᚋbbᚑportalᚋinternalᚋgraphqlᚋmodelᚐInvocationRefOption(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNInvocationRefOption2ᚖgithubᚗcomᚋbuildbarnᚋbbᚑportalᚋinternalᚋgraphqlᚋmodelᚐInvocationRefOption(ctx context.Context, sel ast.SelectionSet, v *model.InvocationRefOption) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._InvocationRefOption(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNInvocationTagConnection2ᚖgithubᚗcomᚋbuildbarnᚋbbᚑportalᚋentᚋgenᚋentᚐInvocationTagConnection(ctx context.Context, sel ast.SelectionSet, v *ent.InvocationTagConnection) graphql.Marshaler {

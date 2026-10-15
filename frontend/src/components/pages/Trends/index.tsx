@@ -23,6 +23,14 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import {
+  InvocationFilterBar,
+  useInvocationFilterSearch,
+} from "@/components/InvocationFilters";
+import {
+  invocationFilterSearch,
+  invocationFiltersWhere,
+} from "@/components/InvocationFilters/utils";
 import { PortalCard } from "@/components/PortalCard";
 import {
   type BazelInvocationNodeFragment,
@@ -31,7 +39,6 @@ import {
   OrderDirection,
 } from "@/graphql/__generated__/graphql";
 import dayjs from "@/lib/dayjs";
-import { BAZEL_COMMANDS } from "@/utils/bazelCommands";
 import {
   INVOCATION_WINDOWS,
   invocationWindowWhere,
@@ -70,7 +77,6 @@ interface DistributionBin {
 
 export const TrendsPage: React.FC = () => {
   const { token } = theme.useToken();
-  const [commands, setCommands] = useState<string[]>([]);
   const [brushRange, setBrushRange] = useState<{
     startIndex: number;
     endIndex: number;
@@ -93,12 +99,19 @@ export const TrendsPage: React.FC = () => {
   const search = useSearch({ from: "/trends" });
   const limit = search.limit ?? TRENDS_DEFAULT_LIMIT;
   const timeWindow = search.window ?? "all";
+  const { commands, filters } = useInvocationFilterSearch(search);
   const navigate = useNavigate({ from: "/trends" });
+  // Other invocations come in, so the pin and zoom no longer apply.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset on change
+  useEffect(() => {
+    setPinned(null);
+    setBrushRange(null);
+  }, [commands, filters]);
   const variables = useMemo<FindBuildTimesQueryVariables>(() => {
     return {
       first: limit,
       where: {
-        ...invocationWindowWhere(timeWindow, commands, new Date()),
+        ...invocationFiltersWhere(timeWindow, commands, filters, new Date()),
         endedAtNotNil: true,
       },
       // Newest first; without an order the API returns the oldest invocations still kept.
@@ -107,7 +120,14 @@ export const TrendsPage: React.FC = () => {
         field: BazelInvocationOrderField.StartedAt,
       },
     };
-  }, [limit, timeWindow, commands]);
+  }, [limit, timeWindow, commands, filters]);
+  const optionsWhere = useMemo(
+    () => ({
+      ...invocationWindowWhere(timeWindow, commands, new Date()),
+      endedAtNotNil: true,
+    }),
+    [timeWindow, commands],
+  );
 
   const { loading, data, previousData, error } = useQuery(
     FIND_BUILD_DURATIONS,
@@ -247,55 +267,61 @@ export const TrendsPage: React.FC = () => {
     <PortalCard
       icon={<LineChartOutlined />}
       titleBits={[<span key="title">Trends</span>]}
+      extraBits={[
+        <Select
+          key="window"
+          style={{ minWidth: 150 }}
+          value={timeWindow}
+          onChange={(value) =>
+            navigate({ search: (prev) => ({ ...prev, window: value }) })
+          }
+          options={Object.entries(INVOCATION_WINDOWS).map(([value, w]) => ({
+            value,
+            label: w.label,
+          }))}
+        />,
+        <Select
+          key="limit"
+          style={{ minWidth: 190 }}
+          value={limit}
+          onChange={(value) =>
+            navigate({ search: (prev) => ({ ...prev, limit: value }) })
+          }
+          options={TRENDS_LIMITS.map((value) => ({
+            value,
+            label: `Latest ${value} invocations`,
+          }))}
+        />,
+      ]}
     >
+      <div style={{ marginBottom: token.marginMD }}>
+        <InvocationFilterBar
+          optionsWhere={optionsWhere}
+          commands={commands}
+          filters={filters}
+          onCommandsChange={(value) =>
+            navigate({
+              search: (prev) => ({
+                ...prev,
+                ...invocationFilterSearch(value, filters),
+              }),
+            })
+          }
+          onFiltersChange={(next) =>
+            navigate({
+              search: (prev) => ({
+                ...prev,
+                ...invocationFilterSearch(commands, next),
+              }),
+            })
+          }
+        />
+      </div>
       <PortalCard
         type="inner"
         icon={<ClockCircleFilled />}
         titleBits={[
           <span key="invocation-durations">Invocation Durations</span>,
-        ]}
-        extraBits={[
-          <Select
-            key="window"
-            style={{ minWidth: 150 }}
-            value={timeWindow}
-            onChange={(value) =>
-              navigate({ search: (prev) => ({ ...prev, window: value }) })
-            }
-            options={Object.entries(INVOCATION_WINDOWS).map(([value, w]) => ({
-              value,
-              label: w.label,
-            }))}
-          />,
-          <Select
-            key="limit"
-            style={{ minWidth: 190 }}
-            value={limit}
-            onChange={(value) =>
-              navigate({ search: (prev) => ({ ...prev, limit: value }) })
-            }
-            options={TRENDS_LIMITS.map((value) => ({
-              value,
-              label: `Latest ${value} invocations`,
-            }))}
-          />,
-          <Select
-            key="command-filter"
-            mode="multiple"
-            allowClear
-            placeholder="All commands"
-            style={{ minWidth: 220 }}
-            value={commands}
-            onChange={(value) => {
-              setCommands(value);
-              setPinned(null);
-              setBrushRange(null);
-            }}
-            options={BAZEL_COMMANDS.map((command) => ({
-              label: command,
-              value: command,
-            }))}
-          />,
         ]}
       >
         <Row>

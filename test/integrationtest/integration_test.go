@@ -783,6 +783,16 @@ var (
 						},
 					},
 				},
+				"InvocationFilterOptions": {
+					"all invocations": {
+						variables: testkit.Variables{
+							"where": map[string]interface{}{
+								"startedAtNotNil": true,
+								"endedAtNotNil":   true,
+							},
+						},
+					},
+				},
 				"ActionHistory": {
 					"unknown action": {
 						variables: testkit.Variables{
