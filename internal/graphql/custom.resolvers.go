@@ -107,6 +107,11 @@ func (r *queryResolver) GetTestSummary(ctx context.Context, invocationID uuid.UU
 	return query.Only(ctx)
 }
 
+// InvocationFilterOptions is the resolver for the invocationFilterOptions field.
+func (r *queryResolver) InvocationFilterOptions(ctx context.Context, where *ent.BazelInvocationWhereInput) (*model.InvocationFilterOptions, error) {
+	return r.invocationFilterOptions(ctx, where)
+}
+
 // ActionInsights is the resolver for the actionInsights field.
 func (r *queryResolver) ActionInsights(ctx context.Context, where *ent.BazelInvocationWhereInput, invocationLimit, rowLimit *int) (*model.ActionInsights, error) {
 	return r.actionInsights(ctx, where, invocationLimit, rowLimit)
@@ -118,7 +123,7 @@ func (r *queryResolver) ActionHistory(ctx context.Context, keyID string, where *
 }
 
 // ActionInsightsFilterOptions is the resolver for the actionInsightsFilterOptions field.
-func (r *queryResolver) ActionInsightsFilterOptions(ctx context.Context, where *ent.BazelInvocationWhereInput) (*model.ActionInsightsFilterOptions, error) {
+func (r *queryResolver) ActionInsightsFilterOptions(ctx context.Context, where *ent.BazelInvocationWhereInput) (*model.InvocationFilterOptions, error) {
 	return r.actionInsightsFilterOptions(ctx, where)
 }
 

@@ -1,0 +1,20 @@
+{
+  "invocationFilterOptions": {
+    "refs": [],
+    "repos": [],
+    "users": [
+      {
+        "invocations": 5,
+        "value": "nameless"
+      },
+      {
+        "invocations": 2,
+        "value": "root"
+      },
+      {
+        "invocations": 1,
+        "value": "runner"
+      }
+    ]
+  }
+}

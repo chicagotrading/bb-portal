@@ -4,8 +4,31 @@ import type React from "react";
 import { useMemo, useState } from "react";
 import type { BazelInvocationWhereInput } from "@/graphql/__generated__/graphql";
 import { BAZEL_COMMANDS } from "@/utils/bazelCommands";
-import { ACTION_INSIGHTS_FILTER_OPTIONS } from "./index.graphql";
-import { type FilterOption, type InsightsFilters, refOptions } from "./utils";
+import {
+  ACTION_INSIGHTS_FILTER_OPTIONS,
+  INVOCATION_FILTER_OPTIONS,
+} from "./index.graphql";
+import {
+  type FilterOption,
+  type InvocationFilterSearch,
+  type InvocationFilters,
+  refOptions,
+} from "./utils";
+
+const NO_COMMANDS: string[] = [];
+
+// The commands and filters of the URL, stable while other params change.
+export const useInvocationFilterSearch = (
+  search: InvocationFilterSearch,
+): { commands: string[]; filters: InvocationFilters } => {
+  const commands = search.command ?? NO_COMMANDS;
+  const { repo, ref, user, ci } = search;
+  const filters = useMemo<InvocationFilters>(
+    () => ({ repo, ref, users: user, ci }),
+    [repo, ref, user, ci],
+  );
+  return { commands, filters };
+};
 
 const NO_OPTIONS: FilterOption[] = [];
 
@@ -23,7 +46,7 @@ const optionRender = (option: {
 );
 
 // A single value Select that also takes a typed value, for a branch
-// without analyzed invocations or when the options failed to load.
+// without counted invocations or when the options failed to load.
 const FreeSelect: React.FC<{
   label: string;
   placeholder: string;
@@ -79,25 +102,37 @@ const CI_VALUES: Record<CiValue, boolean | undefined> = {
   other: false,
 };
 
-export const InsightsFilterBar: React.FC<{
+export const InvocationFilterBar: React.FC<{
   // The time window and commands, which scope the options.
   optionsWhere: BazelInvocationWhereInput;
+  // Offer only values of invocations with an ingested execution log.
+  analyzedOnly?: boolean;
   commands: string[];
-  filters: InsightsFilters;
+  filters: InvocationFilters;
   onCommandsChange: (commands: string[]) => void;
-  onFiltersChange: (filters: InsightsFilters) => void;
+  onFiltersChange: (filters: InvocationFilters) => void;
 }> = ({
   optionsWhere,
+  analyzedOnly = false,
   commands,
   filters,
   onCommandsChange,
   onFiltersChange,
 }) => {
-  const { data, loading, error } = useQuery(ACTION_INSIGHTS_FILTER_OPTIONS, {
+  const analyzed = useQuery(ACTION_INSIGHTS_FILTER_OPTIONS, {
     variables: { where: optionsWhere },
     fetchPolicy: "cache-and-network",
+    skip: !analyzedOnly,
   });
-  const options = data?.actionInsightsFilterOptions;
+  const all = useQuery(INVOCATION_FILTER_OPTIONS, {
+    variables: { where: optionsWhere },
+    fetchPolicy: "cache-and-network",
+    skip: analyzedOnly,
+  });
+  const { loading, error } = analyzedOnly ? analyzed : all;
+  const options = analyzedOnly
+    ? analyzed.data?.actionInsightsFilterOptions
+    : all.data?.invocationFilterOptions;
   const repos = options?.repos ?? NO_OPTIONS;
   const refs = useMemo(
     () => refOptions(options?.refs ?? [], filters.repo),
@@ -107,7 +142,7 @@ export const InsightsFilterBar: React.FC<{
   const ci: CiValue =
     filters.ci === true ? "ci" : filters.ci === false ? "other" : "all";
   // Picking a repo or ref implies CI; not CI clears them.
-  const setSourceControl = (patch: Pick<InsightsFilters, "repo" | "ref">) =>
+  const setSourceControl = (patch: Pick<InvocationFilters, "repo" | "ref">) =>
     onFiltersChange({
       ...filters,
       ...patch,

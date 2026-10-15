@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { INVOCATION_FILTER_SEARCH } from "@/components/InvocationFilters/utils";
 import { ActionInsightsPage } from "@/components/pages/ActionInsights";
 import {
   ACTION_INSIGHTS_TABS,
@@ -13,18 +14,7 @@ import { INVOCATION_WINDOWS } from "@/utils/invocationWindows";
 const ActionInsightsSearchSchema = z.object({
   limit: z.number().int().min(1).max(500).optional().catch(undefined),
   window: z.enum(Object.keys(INVOCATION_WINDOWS)).optional().catch(undefined),
-  command: z.array(z.string()).optional().catch(undefined),
-  repo: z.string().min(1).optional().catch(undefined),
-  ref: z.string().min(1).optional().catch(undefined),
-  // ?user=alice arrives as a string.
-  user: z
-    .preprocess(
-      (value) => (typeof value === "string" ? [value] : value),
-      z.array(z.string().min(1)).min(1),
-    )
-    .optional()
-    .catch(undefined),
-  ci: z.boolean().optional().catch(undefined),
+  ...INVOCATION_FILTER_SEARCH,
   tab: z.enum(ACTION_INSIGHTS_TABS).optional().catch(undefined),
   churnView: z.enum(MAP_VIEWS).optional().catch(undefined),
   impactView: z.enum(MAP_VIEWS).optional().catch(undefined),

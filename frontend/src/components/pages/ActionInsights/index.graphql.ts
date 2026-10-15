@@ -112,23 +112,3 @@ export const ACTION_HISTORY = gql(/* GraphQL */ `
     }
   }
 `);
-
-export const ACTION_INSIGHTS_FILTER_OPTIONS = gql(/* GraphQL */ `
-  query ActionInsightsFilterOptions($where: BazelInvocationWhereInput) {
-    actionInsightsFilterOptions(where: $where) {
-      repos {
-        value
-        invocations
-      }
-      refs {
-        repo
-        ref
-        invocations
-      }
-      users {
-        value
-        invocations
-      }
-    }
-  }
-`);

@@ -6,6 +6,7 @@ go_library(
         "action_insights.go",
         "custom.resolvers.go",
         "ent.resolvers.go",
+        "invocation_filter_options.go",
         "resolver.go",
         "server.go",
         "server_gen.go",

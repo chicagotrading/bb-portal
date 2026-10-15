@@ -13,6 +13,16 @@ import {
 } from "antd";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
+import {
+  InvocationFilterBar,
+  useInvocationFilterSearch,
+} from "@/components/InvocationFilters";
+import {
+  describeInvocations,
+  type InvocationFilters,
+  invocationFilterSearch,
+  invocationFiltersWhere,
+} from "@/components/InvocationFilters/utils";
 import { PortalCard } from "@/components/PortalCard";
 import {
   INVOCATION_WINDOWS,
@@ -21,7 +31,6 @@ import {
 import { readableDurationFromMilliseconds } from "@/utils/time";
 import { CausesTable } from "./CausesTable";
 import { ChurnTable } from "./ChurnTable";
-import { InsightsFilterBar } from "./Filters";
 import { HistoryDrawer } from "./HistoryDrawer";
 import { ImpactTable } from "./ImpactTable";
 import { ACTION_INSIGHTS } from "./index.graphql";
@@ -33,17 +42,13 @@ import type {
 import {
   type ActionInsightsTab,
   coverageParts,
-  describeInvocations,
   emptyReason,
-  type InsightsFilters,
-  insightsWhere,
   type MapView,
 } from "./utils";
 
 const DEFAULT_LIMIT = 100;
 const LIMITS = [25, 50, 100, 200];
 const ROW_LIMIT = 500;
-const NO_COMMANDS: string[] = [];
 
 const NoExecutionLogs: React.FC = () => (
   <Empty
@@ -90,7 +95,7 @@ const NotIngested: React.FC<{ insights: ActionInsightsData }> = ({
 
 const Coverage: React.FC<{
   insights: ActionInsightsData;
-  filters: InsightsFilters;
+  filters: InvocationFilters;
 }> = ({ insights, filters }) => (
   <Space orientation="vertical" size="small" style={{ width: "100%" }}>
     <Typography.Text type="secondary">
@@ -124,12 +129,7 @@ export const ActionInsightsPage: React.FC = () => {
   const navigate = useNavigate({ from: "/action-insights" });
   const limit = search.limit ?? DEFAULT_LIMIT;
   const timeWindow = search.window ?? "all";
-  const commands = search.command ?? NO_COMMANDS;
-  const { repo, ref, user, ci } = search;
-  const filters = useMemo<InsightsFilters>(
-    () => ({ repo, ref, users: user, ci }),
-    [repo, ref, user, ci],
-  );
+  const { commands, filters } = useInvocationFilterSearch(search);
   const tab: ActionInsightsTab = search.tab ?? "impact";
   const churnView: MapView = search.churnView ?? "table";
   const impactView: MapView = search.impactView ?? "table";
@@ -145,7 +145,7 @@ export const ActionInsightsPage: React.FC = () => {
 
   const scope = useMemo<InvocationScope>(
     () => ({
-      where: insightsWhere(timeWindow, commands, filters, new Date()),
+      where: invocationFiltersWhere(timeWindow, commands, filters, new Date()),
       invocationLimit: limit,
     }),
     [timeWindow, commands, filters, limit],
@@ -271,15 +271,16 @@ export const ActionInsightsPage: React.FC = () => {
       ]}
     >
       <Space orientation="vertical" size="middle" style={{ width: "100%" }}>
-        <InsightsFilterBar
+        <InvocationFilterBar
           optionsWhere={optionsWhere}
+          analyzedOnly
           commands={commands}
           filters={filters}
           onCommandsChange={(value) =>
             navigate({
               search: (prev) => ({
                 ...prev,
-                command: value.length > 0 ? value : undefined,
+                ...invocationFilterSearch(value, filters),
               }),
             })
           }
@@ -287,10 +288,7 @@ export const ActionInsightsPage: React.FC = () => {
             navigate({
               search: (prev) => ({
                 ...prev,
-                repo: next.repo,
-                ref: next.ref,
-                user: next.users,
-                ci: next.ci,
+                ...invocationFilterSearch(commands, next),
               }),
             })
           }
