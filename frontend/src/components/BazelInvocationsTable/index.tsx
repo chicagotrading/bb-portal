@@ -1,6 +1,7 @@
 import { BuildOutlined } from "@ant-design/icons";
 import { Space, Typography } from "antd";
 import type React from "react";
+import { useState } from "react";
 import {
   buildColumn,
   durationColumn,
@@ -23,6 +24,7 @@ import type {
   OnBazelInvocationFilterChange,
 } from "../PageCursorTable/types";
 import { tableFiltersToGraphqlWhere } from "../PageCursorTable/utils";
+import { showInstanceNameColumn } from "./showInstanceNameColumn";
 
 interface Props {
   pageSize: number;
@@ -32,7 +34,9 @@ interface Props {
   pageInfo: PageInfo;
 }
 
-const getTableColumns = (): TableColumnTypeWithFilter<
+const getTableColumns = (
+  showInstanceName: boolean,
+): TableColumnTypeWithFilter<
   BazelInvocationNodeFragment,
   BazelInvocationWhereInput
 >[] => [
@@ -42,7 +46,7 @@ const getTableColumns = (): TableColumnTypeWithFilter<
   durationColumn,
   statusColumn,
   buildColumn,
-  instanceNameColumn,
+  ...(showInstanceName ? [instanceNameColumn] : []),
 ];
 
 const BazelInvocationsTable: React.FC<Props> = ({
@@ -52,7 +56,10 @@ const BazelInvocationsTable: React.FC<Props> = ({
   getPaginationUpdateLink,
   pageInfo,
 }) => {
-  const tableColumns = getTableColumns();
+  const [instanceNameFiltered, setInstanceNameFiltered] = useState(false);
+  const tableColumns = getTableColumns(
+    showInstanceNameColumn(invocations, instanceNameFiltered),
+  );
 
   const emptyText = "No Bazel invocations match the specified search criteria";
 
@@ -75,9 +82,10 @@ const BazelInvocationsTable: React.FC<Props> = ({
           </Typography.Text>
         ),
       }}
-      onChange={(_pagination, filters, _sorter, _extra) =>
-        onFilterChange(tableFiltersToGraphqlWhere(tableColumns, filters))
-      }
+      onChange={(_pagination, filters, _sorter, _extra) => {
+        setInstanceNameFiltered(!!filters[`${instanceNameColumn.key}`]?.length);
+        onFilterChange(tableFiltersToGraphqlWhere(tableColumns, filters));
+      }}
       pageInfo={pageInfo}
       pageSize={pageSize}
       getPaginationUpdateLink={getPaginationUpdateLink}
