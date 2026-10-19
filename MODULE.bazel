@@ -43,14 +43,14 @@ git_override(
 
 git_override(
     module_name = "com_github_buildbarn_bb_remote_execution",
-    commit = "5adb988814610d1ebb7b0abc7c6041fbf8f6b841",
-    remote = "https://github.com/buildbarn/bb-remote-execution.git",
+    commit = "0ef83e8747d501817043b2679b1558f73c7304db",
+    remote = "https://github.com/meroton/buildbarn-bb-remote-execution.git",
 )
 
 git_override(
     module_name = "com_github_buildbarn_bb_storage",
-    commit = "0f148371ed7ed4e882a70378a610203df9059e05",
-    remote = "https://github.com/buildbarn/bb-storage.git",
+    commit = "4cbc6ed9242b19603d2299bba4aeecfdd59bc821",
+    remote = "https://github.com/meroton/buildbarn-bb-storage.git",
 )
 
 git_override(
