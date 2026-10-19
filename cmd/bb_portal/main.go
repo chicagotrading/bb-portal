@@ -299,7 +299,6 @@ func createBlobAccess(
 			casConfiguration.ContentAddressableStorage,
 			grpcClientFactory,
 			int(configuration.MaximumMessageSizeBytes),
-			zstdPool,
 		)
 		if err != nil {
 			return nil, util.StatusWrap(err, "Failed to create Content Addressable Storage")

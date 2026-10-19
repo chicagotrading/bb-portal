@@ -81,7 +81,6 @@ func NewBlobstoreService(
 		readerPutter := cas.NewReaderPutter(
 			contentAddressableStorage.ChunkStorage,
 			contentAddressableStorage.ChunkMappingStorage,
-			zstdPool,
 		)
 		remoteexecution.RegisterContentAddressableStorageServer(
 			grpcServer,
@@ -89,7 +88,6 @@ func NewBlobstoreService(
 				contentAddressableStorage.ChunkStorage,
 				contentAddressableStorage.ChunkMappingStorage,
 				contentAddressableStorage.CdcParametersFetcher,
-				zstdPool,
 				readerPutter,
 				contentAddressableStorage.GetAuthorizer,
 				contentAddressableStorage.PutChunkMappingAuthorizer,
