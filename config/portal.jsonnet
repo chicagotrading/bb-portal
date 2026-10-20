@@ -77,12 +77,8 @@ local adminAuthorizer = { allow: {} };
 
   contentAddressableStorageServer: {
     contentAddressableStorage: {
-      chunkStorage: {
-        backend: { grpc: { client: { address: 'localhost:8980' } } },
-      },
-      chunkMappingStorage: {
-        backend: { grpc: { client: { address: 'localhost:8980' } } },
-      },
+      chunkStorage: { grpc: { client: { address: 'localhost:8980' } } },
+      chunkMappingStorage: { grpc: { client: { address: 'localhost:8980' } } },
     },
     getAuthorizer: readAuthorizer,
     maximumChunkCount: 100000,

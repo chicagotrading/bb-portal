@@ -1,0 +1,16 @@
+load("@rules_go//go:def.bzl", "go_test")
+
+go_test(
+    name = "config_test",
+    srcs = ["config_test.go"],
+    data = glob([
+        "*.jmespath",
+        "*.jsonnet",
+    ]),
+    deps = [
+        "//pkg/proto/configuration/bb_portal",
+        "//pkg/proto/configuration/bb_seed",
+        "@com_github_buildbarn_bb_storage//pkg/util",
+        "@com_github_stretchr_testify//require",
+    ],
+)
