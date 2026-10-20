@@ -103,12 +103,43 @@ func (s *BuildQueueStateServerImpl) ListPlatformQueues(ctx context.Context, req 
 
 // ListInvocationChildren proxies ListInvocationChildren requests to the client.
 func (s *BuildQueueStateServerImpl) ListInvocationChildren(ctx context.Context, req *buildqueuestate.ListInvocationChildrenRequest) (*buildqueuestate.ListInvocationChildrenResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "Action is not supported")
+	instanceNamePrefix, err := getInstanceNamePrefixFromSizeClassQueueName(req.GetInvocationName().GetSizeClassQueueName())
+	if err != nil {
+		return nil, err
+	}
+
+	if !common.IsInstanceNameAllowed(ctx, s.readAuthorizer, instanceNamePrefix) {
+		return nil, status.Errorf(codes.PermissionDenied, "Not allowed to list invocation children for instance name prefix %s", instanceNamePrefix)
+	}
+	resp, err := s.client.ListInvocationChildren(ctx, req)
+	if err != nil {
+		return nil, util.StatusWrap(err, "Failed to list invocation children")
+	}
+	return resp, nil
 }
 
 // ListQueuedOperations proxies ListQueuedOperations requests to the client.
 func (s *BuildQueueStateServerImpl) ListQueuedOperations(ctx context.Context, req *buildqueuestate.ListQueuedOperationsRequest) (*buildqueuestate.ListQueuedOperationsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "Action is not supported")
+	instanceNamePrefix, err := getInstanceNamePrefixFromSizeClassQueueName(req.GetInvocationName().GetSizeClassQueueName())
+	if err != nil {
+		return nil, err
+	}
+
+	if !common.IsInstanceNameAllowed(ctx, s.readAuthorizer, instanceNamePrefix) {
+		return nil, status.Errorf(codes.PermissionDenied, "Not allowed to list queued operations for instance name prefix %s", instanceNamePrefix)
+	}
+	resp, err := s.client.ListQueuedOperations(ctx, &buildqueuestate.ListQueuedOperationsRequest{
+		InvocationName: req.InvocationName,
+		PageSize:       min(req.PageSize, s.listOperationsPageSize),
+		StartAfter:     req.StartAfter,
+	})
+	if err != nil {
+		return nil, util.StatusWrap(err, "Failed to list queued operations")
+	}
+	for _, operation := range resp.GetQueuedOperations() {
+		censorQueuedOperationState(ctx, s.readAuthorizer, instanceNamePrefix, operation)
+	}
+	return resp, nil
 }
 
 // ListWorkers proxies ListWorkers requests to the client.
@@ -272,6 +303,19 @@ func censorWorkerState(ctx context.Context, authorizer auth.Authorizer, instance
 	}
 	if !isPrefixSuffixAllowed(ctx, authorizer, instanceNamePrefix, operation.InstanceNameSuffix) {
 		worker.CurrentOperation = nil
+	}
+}
+
+func censorQueuedOperationState(ctx context.Context, authorizer auth.Authorizer, instanceNamePrefix string, operation *buildqueuestate.OperationState) {
+	if !isPrefixSuffixAllowed(ctx, authorizer, instanceNamePrefix, operation.InstanceNameSuffix) {
+		// Keep the entry and its sort keys, so that pagination still works.
+		*operation = buildqueuestate.OperationState{
+			InvocationName:   operation.InvocationName,
+			Priority:         operation.Priority,
+			ExpectedDuration: operation.ExpectedDuration,
+			QueuedTimestamp:  operation.QueuedTimestamp,
+			Stage:            operation.Stage,
+		}
 	}
 }
 

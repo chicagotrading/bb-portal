@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	remoteexecution "github.com/bazelbuild/remote-apis/build/bazel/remote/execution/v2"
 	"github.com/buildbarn/bb-portal/internal/mock"
 	"github.com/stretchr/testify/require"
 
@@ -21,6 +22,8 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -1179,6 +1182,233 @@ func TestGetInstanceNamePrefixFromSizeClassQueueName(t *testing.T) {
 		instanceNamePrefix, err := getInstanceNamePrefixFromSizeClassQueueName(newSizeClassQueueName("a/b"))
 		require.NoError(t, err)
 		require.Equal(t, "a/b", instanceNamePrefix)
+	})
+}
+
+func TestCensorQueuedOperationState(t *testing.T) {
+	a := newPermittedInstanceNamesAuthorizer()
+	ctx := newContextWithPermittedInstanceNames("allowed", "allowed/foo")
+
+	newOperation := func(instanceNameSuffix string) *buildqueuestate.OperationState {
+		return &buildqueuestate.OperationState{
+			Name:               "op1",
+			Priority:           3,
+			ExpectedDuration:   &durationpb.Duration{Seconds: 5},
+			QueuedTimestamp:    &timestamppb.Timestamp{Seconds: 1000},
+			Timeout:            &timestamppb.Timestamp{Seconds: 2000},
+			ActionDigest:       &remoteexecution.Digest{Hash: "abc", SizeBytes: 12},
+			TargetId:           "//foo:bar",
+			InstanceNameSuffix: instanceNameSuffix,
+			DigestFunction:     remoteexecution.DigestFunction_SHA256,
+			Stage:              &buildqueuestate.OperationState_Queued{Queued: &emptypb.Empty{}},
+		}
+	}
+
+	t.Run("AllowedSuffix", func(t *testing.T) {
+		operation := newOperation("foo")
+		censorQueuedOperationState(ctx, a, "allowed", operation)
+		testutil.RequireEqualProto(t, newOperation("foo"), operation)
+	})
+
+	t.Run("AllowedEmptySuffix", func(t *testing.T) {
+		operation := newOperation("")
+		censorQueuedOperationState(ctx, a, "allowed", operation)
+		testutil.RequireEqualProto(t, newOperation(""), operation)
+	})
+
+	t.Run("DisallowedSuffix", func(t *testing.T) {
+		operation := newOperation("bar")
+		censorQueuedOperationState(ctx, a, "allowed", operation)
+		testutil.RequireEqualProto(t, &buildqueuestate.OperationState{
+			Priority:         3,
+			ExpectedDuration: &durationpb.Duration{Seconds: 5},
+			QueuedTimestamp:  &timestamppb.Timestamp{Seconds: 1000},
+			Stage:            &buildqueuestate.OperationState_Queued{Queued: &emptypb.Empty{}},
+		}, operation)
+	})
+
+	t.Run("JoinMatchesIsPrefixSuffixAllowed", func(t *testing.T) {
+		for _, tc := range []struct{ prefix, suffix string }{
+			{"", ""},
+			{"", "allowed"},
+			{"", "foo"},
+			{"allowed", ""},
+			{"allowed", "foo"},
+			{"allowed", "bar"},
+			{"forbidden", "foo"},
+		} {
+			operation := newOperation(tc.suffix)
+			censorQueuedOperationState(ctx, a, tc.prefix, operation)
+			require.Equal(t, isPrefixSuffixAllowed(ctx, a, tc.prefix, tc.suffix), operation.ActionDigest != nil, "prefix %#v suffix %#v", tc.prefix, tc.suffix)
+		}
+	})
+}
+
+func TestListInvocationChildren(t *testing.T) {
+	ctrl, ctx := gomock.WithContext(newContextWithPermittedInstanceNames("allowed"), t)
+	bqsClient := mock.NewMockBuildQueueStateClient(ctrl)
+	readAuthorizer := newPermittedInstanceNamesAuthorizer()
+	bqsServer := NewBuildQueueStateServerImpl(bqsClient, readAuthorizer, readAuthorizer, nil, 2)
+
+	t.Run("Allowed", func(t *testing.T) {
+		req := &buildqueuestate.ListInvocationChildrenRequest{
+			InvocationName: &buildqueuestate.InvocationName{
+				SizeClassQueueName: newSizeClassQueueName("allowed"),
+				Ids:                []*anypb.Any{{TypeUrl: "type.googleapis.com/foo", Value: []byte{1, 2, 3}}},
+			},
+			Filter: buildqueuestate.ListInvocationChildrenRequest_QUEUED,
+		}
+		clientResponse := &buildqueuestate.ListInvocationChildrenResponse{
+			Children: []*buildqueuestate.InvocationChildState{
+				{Id: &anypb.Any{TypeUrl: "type.googleapis.com/foo", Value: []byte{9}}, State: &buildqueuestate.InvocationState{QueuedChildrenCount: 2}},
+				{Id: &anypb.Any{TypeUrl: "type.googleapis.com/foo", Value: []byte{4}}, State: &buildqueuestate.InvocationState{QueuedChildrenCount: 1}},
+			},
+		}
+		bqsClient.EXPECT().ListInvocationChildren(gomock.Any(), req).Return(clientResponse, nil)
+
+		resp, err := bqsServer.ListInvocationChildren(ctx, req)
+		require.NoError(t, err)
+		require.Same(t, clientResponse, resp)
+	})
+
+	t.Run("DeniedPrefix", func(t *testing.T) {
+		_, err := bqsServer.ListInvocationChildren(ctx, &buildqueuestate.ListInvocationChildrenRequest{
+			InvocationName: &buildqueuestate.InvocationName{SizeClassQueueName: newSizeClassQueueName("forbidden")},
+		})
+		testutil.RequireEqualStatus(t, status.Error(codes.PermissionDenied, "Not allowed to list invocation children for instance name prefix forbidden"), err)
+	})
+
+	t.Run("MissingInvocationName", func(t *testing.T) {
+		_, err := bqsServer.ListInvocationChildren(ctx, &buildqueuestate.ListInvocationChildrenRequest{})
+		require.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+
+	t.Run("InvocationNotFound", func(t *testing.T) {
+		bqsClient.EXPECT().ListInvocationChildren(gomock.Any(), gomock.Any()).Return(nil, status.Error(codes.NotFound, "Invocation not found"))
+
+		_, err := bqsServer.ListInvocationChildren(ctx, &buildqueuestate.ListInvocationChildrenRequest{
+			InvocationName: &buildqueuestate.InvocationName{SizeClassQueueName: newSizeClassQueueName("allowed")},
+		})
+		testutil.RequireEqualStatus(t, status.Error(codes.NotFound, "Failed to list invocation children: Invocation not found"), err)
+	})
+}
+
+func TestListQueuedOperations(t *testing.T) {
+	ctrl, ctx := gomock.WithContext(newContextWithPermittedInstanceNames("allowed", "allowed/foo"), t)
+	bqsClient := mock.NewMockBuildQueueStateClient(ctrl)
+	readAuthorizer := newPermittedInstanceNamesAuthorizer()
+	bqsServer := NewBuildQueueStateServerImpl(bqsClient, readAuthorizer, readAuthorizer, nil, 2)
+
+	invocationName := &buildqueuestate.InvocationName{SizeClassQueueName: newSizeClassQueueName("allowed")}
+	startAfter := &buildqueuestate.ListQueuedOperationsRequest_StartAfter{
+		Priority:         1,
+		ExpectedDuration: &durationpb.Duration{Seconds: 2},
+		QueuedTimestamp:  &timestamppb.Timestamp{Seconds: 3},
+	}
+
+	t.Run("ClampsPageSize", func(t *testing.T) {
+		bqsClient.EXPECT().ListQueuedOperations(gomock.Any(), gomock.Any()).DoAndReturn(
+			func(ctx context.Context, req *buildqueuestate.ListQueuedOperationsRequest, opts ...any) (*buildqueuestate.ListQueuedOperationsResponse, error) {
+				testutil.RequireEqualProto(t, &buildqueuestate.ListQueuedOperationsRequest{
+					InvocationName: invocationName,
+					PageSize:       2,
+					StartAfter:     startAfter,
+				}, req)
+				return &buildqueuestate.ListQueuedOperationsResponse{PaginationInfo: &buildqueuestate.PaginationInfo{}}, nil
+			},
+		)
+
+		_, err := bqsServer.ListQueuedOperations(ctx, &buildqueuestate.ListQueuedOperationsRequest{
+			InvocationName: invocationName,
+			PageSize:       100,
+			StartAfter:     startAfter,
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("KeepsSmallerPageSize", func(t *testing.T) {
+		bqsClient.EXPECT().ListQueuedOperations(gomock.Any(), gomock.Any()).DoAndReturn(
+			func(ctx context.Context, req *buildqueuestate.ListQueuedOperationsRequest, opts ...any) (*buildqueuestate.ListQueuedOperationsResponse, error) {
+				require.Equal(t, uint32(1), req.PageSize)
+				require.Nil(t, req.StartAfter)
+				return &buildqueuestate.ListQueuedOperationsResponse{PaginationInfo: &buildqueuestate.PaginationInfo{}}, nil
+			},
+		)
+
+		_, err := bqsServer.ListQueuedOperations(ctx, &buildqueuestate.ListQueuedOperationsRequest{
+			InvocationName: invocationName,
+			PageSize:       1,
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("CensorsOperations", func(t *testing.T) {
+		bqsClient.EXPECT().ListQueuedOperations(gomock.Any(), gomock.Any()).Return(&buildqueuestate.ListQueuedOperationsResponse{
+			QueuedOperations: []*buildqueuestate.OperationState{
+				{
+					Name:               "op1",
+					Priority:           1,
+					ActionDigest:       &remoteexecution.Digest{Hash: "abc", SizeBytes: 1},
+					TargetId:           "//allowed",
+					InstanceNameSuffix: "foo",
+					DigestFunction:     remoteexecution.DigestFunction_SHA256,
+				},
+				{
+					Name:               "op2",
+					Priority:           2,
+					ActionDigest:       &remoteexecution.Digest{Hash: "def", SizeBytes: 2},
+					TargetId:           "//forbidden",
+					InstanceNameSuffix: "bar",
+					DigestFunction:     remoteexecution.DigestFunction_SHA256,
+				},
+			},
+			PaginationInfo: &buildqueuestate.PaginationInfo{StartIndex: 4, TotalEntries: 10},
+		}, nil)
+
+		resp, err := bqsServer.ListQueuedOperations(ctx, &buildqueuestate.ListQueuedOperationsRequest{
+			InvocationName: invocationName,
+			PageSize:       2,
+		})
+		require.NoError(t, err)
+		testutil.RequireEqualProto(t, &buildqueuestate.ListQueuedOperationsResponse{
+			QueuedOperations: []*buildqueuestate.OperationState{
+				{
+					Name:               "op1",
+					Priority:           1,
+					ActionDigest:       &remoteexecution.Digest{Hash: "abc", SizeBytes: 1},
+					TargetId:           "//allowed",
+					InstanceNameSuffix: "foo",
+					DigestFunction:     remoteexecution.DigestFunction_SHA256,
+				},
+				{
+					Priority: 2,
+				},
+			},
+			PaginationInfo: &buildqueuestate.PaginationInfo{StartIndex: 4, TotalEntries: 10},
+		}, resp)
+	})
+
+	t.Run("DeniedPrefix", func(t *testing.T) {
+		_, err := bqsServer.ListQueuedOperations(ctx, &buildqueuestate.ListQueuedOperationsRequest{
+			InvocationName: &buildqueuestate.InvocationName{SizeClassQueueName: newSizeClassQueueName("forbidden")},
+			PageSize:       2,
+		})
+		testutil.RequireEqualStatus(t, status.Error(codes.PermissionDenied, "Not allowed to list queued operations for instance name prefix forbidden"), err)
+	})
+
+	t.Run("MissingInvocationName", func(t *testing.T) {
+		_, err := bqsServer.ListQueuedOperations(ctx, &buildqueuestate.ListQueuedOperationsRequest{PageSize: 2})
+		require.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+
+	t.Run("ClientError", func(t *testing.T) {
+		bqsClient.EXPECT().ListQueuedOperations(gomock.Any(), gomock.Any()).Return(nil, status.Error(codes.NotFound, "Invocation not found"))
+
+		_, err := bqsServer.ListQueuedOperations(ctx, &buildqueuestate.ListQueuedOperationsRequest{
+			InvocationName: invocationName,
+			PageSize:       2,
+		})
+		testutil.RequireEqualStatus(t, status.Error(codes.NotFound, "Failed to list queued operations: Invocation not found"), err)
 	})
 }
 
