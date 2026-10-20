@@ -43,13 +43,13 @@ git_override(
 
 git_override(
     module_name = "com_github_buildbarn_bb_remote_execution",
-    commit = "1a817312eff81b43c1fff54a24aea6045ff0f193",
+    commit = "ead81a3173d11640deda6c89b8fdb3dd45b829e3",
     remote = "https://github.com/chicagotrading/bb-remote-execution.git",
 )
 
 git_override(
     module_name = "com_github_buildbarn_bb_storage",
-    commit = "b6ca509cb1cccc88b3c6a59635711eeb42b800c3",
+    commit = "f5a43515c9327083c457d58c470ef1268c8848e8",
     remote = "https://github.com/chicagotrading/bb-storage.git",
 )
 
