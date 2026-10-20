@@ -8,6 +8,7 @@ import type { WorkerSearchParams } from "@/routes/scheduler.worker";
 export const SchedulerWorkersPage: React.FC<WorkerSearchParams> = ({
   workerStatusFilter,
   sizeClassQueueName,
+  invocationIds,
   cursor,
 }) => {
   return (
@@ -19,6 +20,7 @@ export const SchedulerWorkersPage: React.FC<WorkerSearchParams> = ({
       <WorkersGrid
         workerStatusFilter={workerStatusFilter}
         sizeClassQueueName={sizeClassQueueName}
+        invocationIds={invocationIds}
         cursor={cursor}
       />
     </PortalCard>

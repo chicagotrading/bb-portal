@@ -2,16 +2,19 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { z } from "zod";
 import { SchedulerWorkersPage } from "@/components/pages/SchedulerWorkers";
 import { generatePageTitle } from "@/utils/generatePageTitle";
+import { InvocationIdSchema } from "@/utils/invocationName";
 import { SizeClassQueueNameSchema } from "@/utils/sizeClassQueueName";
 
 export enum WorkerListStatus {
   ALL = "all",
   EXECUTING = "executing",
+  IDLE_SYNCHRONIZING = "idleSynchronizing",
 }
 
 const WorkerSearchSchema = z.object({
   workerStatusFilter: z.enum(WorkerListStatus).catch(WorkerListStatus.ALL),
   sizeClassQueueName: SizeClassQueueNameSchema.optional().catch(undefined),
+  invocationIds: z.array(InvocationIdSchema).optional(),
   cursor: z.record(z.string(), z.string()).optional(),
 });
 
@@ -42,7 +45,8 @@ export const Route = createFileRoute("/scheduler/worker")({
 });
 
 function RouteComponent() {
-  const { workerStatusFilter, sizeClassQueueName, cursor } = Route.useSearch();
+  const { workerStatusFilter, sizeClassQueueName, invocationIds, cursor } =
+    Route.useSearch();
 
   // beforeLoad redirects without a queue.
   if (!sizeClassQueueName) {
@@ -53,6 +57,7 @@ function RouteComponent() {
     <SchedulerWorkersPage
       workerStatusFilter={workerStatusFilter}
       sizeClassQueueName={sizeClassQueueName}
+      invocationIds={invocationIds}
       cursor={cursor}
     />
   );

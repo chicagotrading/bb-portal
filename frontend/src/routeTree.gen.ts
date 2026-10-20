@@ -27,6 +27,7 @@ import { Route as BrowserIndexRouteImport } from './routes/browser.index'
 import { Route as BazelInvocationsIndexRouteImport } from './routes/bazel-invocations.index'
 import { Route as UsersUserUUIDRouteImport } from './routes/users.$userUUID'
 import { Route as SchedulerWorkerRouteImport } from './routes/scheduler.worker'
+import { Route as SchedulerInvocationRouteImport } from './routes/scheduler.invocation'
 import { Route as SchedulerDrainRouteImport } from './routes/scheduler.drain'
 import { Route as OperationsOperationIDRouteImport } from './routes/operations.$operationID'
 import { Route as BuildsBuildUUIDRouteImport } from './routes/builds.$buildUUID'
@@ -134,6 +135,11 @@ const UsersUserUUIDRoute = UsersUserUUIDRouteImport.update({
 const SchedulerWorkerRoute = SchedulerWorkerRouteImport.update({
   id: '/worker',
   path: '/worker',
+  getParentRoute: () => SchedulerRoute,
+} as any)
+const SchedulerInvocationRoute = SchedulerInvocationRouteImport.update({
+  id: '/invocation',
+  path: '/invocation',
   getParentRoute: () => SchedulerRoute,
 } as any)
 const SchedulerDrainRoute = SchedulerDrainRouteImport.update({
@@ -254,6 +260,7 @@ export interface FileRoutesByFullPath {
   '/builds/$buildUUID': typeof BuildsBuildUUIDRoute
   '/operations/$operationID': typeof OperationsOperationIDRoute
   '/scheduler/drain': typeof SchedulerDrainRoute
+  '/scheduler/invocation': typeof SchedulerInvocationRoute
   '/scheduler/worker': typeof SchedulerWorkerRoute
   '/users/$userUUID': typeof UsersUserUUIDRoute
   '/bazel-invocations/': typeof BazelInvocationsIndexRoute
@@ -284,6 +291,7 @@ export interface FileRoutesByTo {
   '/builds/$buildUUID': typeof BuildsBuildUUIDRoute
   '/operations/$operationID': typeof OperationsOperationIDRoute
   '/scheduler/drain': typeof SchedulerDrainRoute
+  '/scheduler/invocation': typeof SchedulerInvocationRoute
   '/scheduler/worker': typeof SchedulerWorkerRoute
   '/users/$userUUID': typeof UsersUserUUIDRoute
   '/bazel-invocations': typeof BazelInvocationsIndexRoute
@@ -322,6 +330,7 @@ export interface FileRoutesById {
   '/builds/$buildUUID': typeof BuildsBuildUUIDRoute
   '/operations/$operationID': typeof OperationsOperationIDRoute
   '/scheduler/drain': typeof SchedulerDrainRoute
+  '/scheduler/invocation': typeof SchedulerInvocationRoute
   '/scheduler/worker': typeof SchedulerWorkerRoute
   '/users/$userUUID': typeof UsersUserUUIDRoute
   '/bazel-invocations/': typeof BazelInvocationsIndexRoute
@@ -362,6 +371,7 @@ export interface FileRouteTypes {
     | '/builds/$buildUUID'
     | '/operations/$operationID'
     | '/scheduler/drain'
+    | '/scheduler/invocation'
     | '/scheduler/worker'
     | '/users/$userUUID'
     | '/bazel-invocations/'
@@ -392,6 +402,7 @@ export interface FileRouteTypes {
     | '/builds/$buildUUID'
     | '/operations/$operationID'
     | '/scheduler/drain'
+    | '/scheduler/invocation'
     | '/scheduler/worker'
     | '/users/$userUUID'
     | '/bazel-invocations'
@@ -429,6 +440,7 @@ export interface FileRouteTypes {
     | '/builds/$buildUUID'
     | '/operations/$operationID'
     | '/scheduler/drain'
+    | '/scheduler/invocation'
     | '/scheduler/worker'
     | '/users/$userUUID'
     | '/bazel-invocations/'
@@ -592,6 +604,13 @@ declare module '@tanstack/react-router' {
       path: '/worker'
       fullPath: '/scheduler/worker'
       preLoaderRoute: typeof SchedulerWorkerRouteImport
+      parentRoute: typeof SchedulerRoute
+    }
+    '/scheduler/invocation': {
+      id: '/scheduler/invocation'
+      path: '/invocation'
+      fullPath: '/scheduler/invocation'
+      preLoaderRoute: typeof SchedulerInvocationRouteImport
       parentRoute: typeof SchedulerRoute
     }
     '/scheduler/drain': {
@@ -835,12 +854,14 @@ const OperationsRouteWithChildren = OperationsRoute._addFileChildren(
 
 interface SchedulerRouteChildren {
   SchedulerDrainRoute: typeof SchedulerDrainRoute
+  SchedulerInvocationRoute: typeof SchedulerInvocationRoute
   SchedulerWorkerRoute: typeof SchedulerWorkerRoute
   SchedulerIndexRoute: typeof SchedulerIndexRoute
 }
 
 const SchedulerRouteChildren: SchedulerRouteChildren = {
   SchedulerDrainRoute: SchedulerDrainRoute,
+  SchedulerInvocationRoute: SchedulerInvocationRoute,
   SchedulerWorkerRoute: SchedulerWorkerRoute,
   SchedulerIndexRoute: SchedulerIndexRoute,
 }
