@@ -222,6 +222,7 @@ func (s FileServerService) HandleFile(w http.ResponseWriter, req *http.Request, 
 		contentType = "application/octet-stream"
 	}
 
+	w.Header().Set("Content-Security-Policy", "sandbox allow-scripts")
 	w.Header().Set("Content-Type", contentType)
 	for _, chunkDigest := range chunkDigests {
 		chunkBytes, err := s.chunkBytesReader.Read(ctx, chunkDigest)
